@@ -1,0 +1,10 @@
+  // "allow": [
+    //   "Bash(forge build:*)",
+    //   "Bash(supabase init:*)",
+    //   "Bash(supabase start:*)",
+    //   "Bash(npm run dev:*)",
+    //   "Bash(cast send:*)",
+    //   "Bash(curl:*)",
+    //   "Bash(cast abi-encode:*)",
+    //   "Bash(cast rpc:*)"
+    // ]

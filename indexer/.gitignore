@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Ponder
+.ponder/
+generated/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Build output
+dist/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
