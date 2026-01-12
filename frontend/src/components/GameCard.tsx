@@ -19,9 +19,9 @@ export function GameCard({ game }: GameCardProps) {
 
     const updateTimer = () => {
       if (game.state === 'CommitPhase' && game.commitDeadline) {
-        setTimeLeft(getTimeRemaining(game.commitDeadline));
+        setTimeLeft(getTimeRemaining(Number(game.commitDeadline)));
       } else if (game.state === 'RevealPhase' && game.revealDeadline) {
-        setTimeLeft(getTimeRemaining(game.revealDeadline));
+        setTimeLeft(getTimeRemaining(Number(game.revealDeadline)));
       }
     };
 

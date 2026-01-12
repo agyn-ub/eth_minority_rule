@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { parseEther } from 'viem';
@@ -21,6 +21,17 @@ export default function CreateGamePage() {
 
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+
+  // Show toast only after MetaMask confirms (when blockchain is confirming)
+  useEffect(() => {
+    if (hash && isConfirming) {
+      toast({
+        title: 'Creating Game',
+        description: 'Waiting for blockchain confirmation...',
+        duration: 10000,
+      });
+    }
+  }, [hash, isConfirming, toast]);
 
   const handleCreateGame = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,11 +72,6 @@ export default function CreateGamePage() {
         functionName: 'createGame',
         args: [questionText, entryFeeWei],
       });
-
-      toast({
-        title: 'Creating Game',
-        description: 'Your transaction has been submitted',
-      });
     } catch (error) {
       console.error('Error creating game:', error);
       toast({
@@ -75,6 +81,26 @@ export default function CreateGamePage() {
       });
     }
   };
+
+  // Show loading state while waiting for transaction
+  if (isPending || isConfirming) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <Card>
+          <CardHeader>
+            <CardTitle>Creating Game...</CardTitle>
+            <CardDescription>
+              {isPending && 'Please confirm the transaction in MetaMask'}
+              {isConfirming && 'Waiting for blockchain confirmation...'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (isSuccess) {
     setTimeout(() => {

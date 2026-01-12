@@ -3,23 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useAccount } from 'wagmi';
-import {
-  getGame,
-  getGamePlayers,
-  getGameVotes,
-  getGameCommits,
-  getGameRounds,
-  getGameWinners,
-  type Game,
-  type Player,
-  type Vote,
-  type Commit,
-  type Round,
-  type Winner,
-} from '@/lib/supabase';
+import { useGameDetail } from '@/hooks/queries/use-game';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { VoteCommitForm } from '@/components/VoteCommitForm';
 import { VoteRevealForm } from '@/components/VoteRevealForm';
+import { JoinGameForm } from '@/components/JoinGameForm';
+import { GameConfigForm } from '@/components/GameConfigForm';
 import { formatWei, formatAddress, getGameStateLabel, getTimeRemaining } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -27,30 +16,38 @@ export default function GamePage() {
   const params = useParams();
   const gameId = Number(params.id);
   const { address } = useAccount();
-
-  const [game, setGame] = useState<Game | null>(null);
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [votes, setVotes] = useState<Vote[]>([]);
-  const [commits, setCommits] = useState<Commit[]>([]);
-  const [rounds, setRounds] = useState<Round[]>([]);
-  const [winners, setWinners] = useState<Winner[]>([]);
-  const [loading, setLoading] = useState(true);
   const [timeLeft, setTimeLeft] = useState<string>('');
+  const [currentTime, setCurrentTime] = useState<number>(Math.floor(Date.now() / 1000));
 
-  useEffect(() => {
-    loadGameData();
-    const interval = setInterval(loadGameData, 5000); // Refresh every 5 seconds
-    return () => clearInterval(interval);
-  }, [gameId]);
+  // Replace manual polling with React Query
+  const {
+    game,
+    players,
+    votes,
+    commits,
+    rounds,
+    winners,
+    isLoading,
+  } = useGameDetail(gameId);
 
+  // Check if current user is the game creator
+  const isCreator = address && game?.creatorAddress
+    ? address.toLowerCase() === game.creatorAddress.toLowerCase()
+    : false;
+
+  // Timer updates (client-side only, doesn't require data fetching)
   useEffect(() => {
     if (!game) return;
 
     const updateTimer = () => {
+      // Update current time
+      setCurrentTime(Math.floor(Date.now() / 1000));
+
+      // Update time remaining displays
       if (game.state === 'CommitPhase' && game.commitDeadline) {
-        setTimeLeft(getTimeRemaining(game.commitDeadline));
+        setTimeLeft(getTimeRemaining(Number(game.commitDeadline)));
       } else if (game.state === 'RevealPhase' && game.revealDeadline) {
-        setTimeLeft(getTimeRemaining(game.revealDeadline));
+        setTimeLeft(getTimeRemaining(Number(game.revealDeadline)));
       }
     };
 
@@ -59,28 +56,7 @@ export default function GamePage() {
     return () => clearInterval(interval);
   }, [game]);
 
-  const loadGameData = async () => {
-    setLoading(true);
-    const [gameData, playersData, votesData, commitsData, roundsData, winnersData] =
-      await Promise.all([
-        getGame(gameId),
-        getGamePlayers(gameId),
-        getGameVotes(gameId),
-        getGameCommits(gameId),
-        getGameRounds(gameId),
-        getGameWinners(gameId),
-      ]);
-
-    setGame(gameData);
-    setPlayers(playersData);
-    setVotes(votesData);
-    setCommits(commitsData);
-    setRounds(roundsData);
-    setWinners(winnersData);
-    setLoading(false);
-  };
-
-  if (loading || !game) {
+  if (isLoading || !game) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <p className="text-muted-foreground">Loading game...</p>
@@ -104,6 +80,7 @@ export default function GamePage() {
         <h1 className="text-4xl font-bold">{game.questionText}</h1>
         <p className="text-muted-foreground mt-2">
           Game #{game.id} • Round {game.currentRound} • {getGameStateLabel(game.state)}
+          {isCreator && <span className="ml-2 px-2 py-1 text-xs bg-primary text-primary-foreground rounded-full">Creator</span>}
         </p>
       </div>
 
@@ -143,11 +120,42 @@ export default function GamePage() {
         </Card>
       </div>
 
-      {game.state === 'CommitPhase' && hasJoined && !hasCommitted && (
+      {/* Creator configuration - only shown to game creator */}
+      {isCreator && game.state === 'ZeroPhase' && (
+        <GameConfigForm gameId={gameId} currentState={game.state} />
+      )}
+
+      {isCreator && game.state === 'CommitPhase' && game.commitDeadline &&
+        currentTime >= Number(game.commitDeadline) && (
+        <GameConfigForm gameId={gameId} currentState={game.state} />
+      )}
+
+      {isCreator && game.state === 'CommitPhase' && game.commitDeadline &&
+        currentTime < Number(game.commitDeadline) && (
+        <Card className="border-muted">
+          <CardHeader>
+            <CardTitle>Waiting for Commit Phase to End</CardTitle>
+            <CardDescription>
+              The reveal deadline can be set after the commit deadline passes and at least one player has committed.
+              <br />
+              <strong>Time remaining: {timeLeft}</strong>
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      )}
+
+      {!hasJoined && game.state === 'CommitPhase' && game.currentRound === 1 &&
+        game.commitDeadline && currentTime < Number(game.commitDeadline) && (
+        <JoinGameForm gameId={gameId} entryFee={game.entryFee} />
+      )}
+
+      {game.state === 'CommitPhase' && hasJoined && !hasCommitted &&
+        game.commitDeadline && currentTime < Number(game.commitDeadline) && (
         <VoteCommitForm gameId={gameId} currentRound={game.currentRound} />
       )}
 
-      {game.state === 'RevealPhase' && hasJoined && hasCommitted && !hasRevealed && (
+      {game.state === 'RevealPhase' && hasJoined && hasCommitted && !hasRevealed &&
+        game.revealDeadline && currentTime < Number(game.revealDeadline) && (
         <VoteRevealForm gameId={gameId} currentRound={game.currentRound} />
       )}
 

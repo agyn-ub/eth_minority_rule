@@ -1,31 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { GameCard } from '@/components/GameCard';
-import { getActiveGames, getCompletedGames, type Game } from '@/lib/supabase';
+import { useGameLists } from '@/hooks/queries/use-games';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 
 export default function Home() {
-  const [activeGames, setActiveGames] = useState<Game[]>([]);
-  const [completedGames, setCompletedGames] = useState<Game[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showCompleted, setShowCompleted] = useState(false);
 
-  useEffect(() => {
-    loadGames();
-  }, []);
+  // Replace manual polling with React Query
+  const { activeGames, completedGames, isLoading } = useGameLists();
 
-  const loadGames = async () => {
-    setLoading(true);
-    const [active, completed] = await Promise.all([getActiveGames(), getCompletedGames()]);
-    setActiveGames(active);
-    setCompletedGames(completed);
-    setLoading(false);
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <p className="text-muted-foreground">Loading games...</p>
