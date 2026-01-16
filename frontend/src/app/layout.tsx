@@ -4,6 +4,7 @@ import './globals.css';
 import { Providers } from './providers';
 import { Toaster } from '@/components/ui/toaster';
 import { ConnectButton } from '@/components/ConnectButton';
+import { CreateGameModal } from '@/components/CreateGameModal';
 import Link from 'next/link';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -19,31 +20,72 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <body className={inter.className}>
         <Providers>
           <div className="min-h-screen flex flex-col">
-            <header className="border-b">
-              <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-                <Link href="/" className="flex items-center gap-2">
-                  <h1 className="text-2xl font-bold">Minority Rule</h1>
+            {/* Dramatic Header - Liar Game Style */}
+            <header className="border-b border-primary/30 bg-card sticky top-0 z-50">
+              <div className="container mx-auto px-4 py-5 flex items-center justify-between">
+                <Link href="/" className="flex items-center gap-3 group">
+                  <div className="w-1 h-8 bg-gradient-to-b from-primary to-accent"></div>
+                  <div>
+                    <h1 className="text-lg font-bold tracking-tight">
+                      MINORITY RULE
+                    </h1>
+                    <p className="text-xs text-muted-foreground font-mono tracking-wide">
+                      TRUST NO ONE
+                    </p>
+                  </div>
                 </Link>
-                <nav className="flex items-center gap-6">
-                  <Link href="/" className="text-sm hover:underline">
+                <nav className="flex items-center gap-8">
+                  <Link
+                    href="/"
+                    className="text-sm font-bold uppercase tracking-wider hover:text-primary transition-colors relative group"
+                  >
                     Games
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-[width]"></span>
                   </Link>
-                  <Link href="/create" className="text-sm hover:underline">
-                    Create Game
+                  <Link
+                    href="/my-games"
+                    className="text-sm font-bold uppercase tracking-wider hover:text-accent transition-colors relative group"
+                  >
+                    My Games
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-accent group-hover:w-full transition-[width]"></span>
                   </Link>
+                  <Link
+                    href="/how-it-works"
+                    className="text-sm font-bold uppercase tracking-wider hover:text-accent transition-colors relative group"
+                  >
+                    How It Works
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-accent group-hover:w-full transition-[width]"></span>
+                  </Link>
+                  <CreateGameModal
+                    trigger={
+                      <button className="text-sm font-bold uppercase tracking-wider hover:text-accent transition-colors relative group">
+                        Create Game
+                        <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-accent group-hover:w-full transition-[width]"></span>
+                      </button>
+                    }
+                  />
                   <ConnectButton />
                 </nav>
               </div>
             </header>
 
-            <main className="flex-1 container mx-auto px-4 py-8">{children}</main>
+            <main className="flex-1 container mx-auto px-4 py-10">{children}</main>
 
-            <footer className="border-t py-6 text-center text-sm text-muted-foreground">
-              <p>Minority Rule Game • Built on Base</p>
+            <footer className="border-t border-primary/20 py-8 text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <div className="w-2 h-2 bg-primary"></div>
+                <p className="text-sm font-bold tracking-wider uppercase">
+                  Minority Rule Game
+                </p>
+                <div className="w-2 h-2 bg-accent"></div>
+              </div>
+              <p className="text-xs text-muted-foreground font-mono">
+                Built on Base • Where only the minority survives
+              </p>
             </footer>
           </div>
           <Toaster />

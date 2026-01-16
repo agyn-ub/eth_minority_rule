@@ -1,82 +1,140 @@
 'use client';
 
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Game } from '@/lib/supabase';
-import { formatWei, getGameStateLabel, getGameStateColor, getTimeRemaining } from '@/lib/utils';
-import { useEffect, useState } from 'react';
+import { formatWei, getGameStateLabel } from '@/lib/utils';
+import { TimerProgress } from '@/components/TimerProgress';
 
 interface GameCardProps {
   game: Game;
 }
 
+// Helper function to get state-based background color
+function getStateBgColor(state: string): string {
+  switch (state) {
+    case 'ZeroPhase':
+      return 'bg-state-waiting';
+    case 'CommitPhase':
+      return 'bg-state-commit';
+    case 'RevealPhase':
+      return 'bg-state-reveal';
+    case 'Completed':
+      return 'bg-state-completed';
+    default:
+      return 'bg-state-waiting';
+  }
+}
+
+
 export function GameCard({ game }: GameCardProps) {
-  const [timeLeft, setTimeLeft] = useState<string>('');
+  const stateBgColor = getStateBgColor(game.state);
+  const stateLabel = getGameStateLabel(game.state);
 
-  useEffect(() => {
-    if (!game.commitDeadline && !game.revealDeadline) return;
-
-    const updateTimer = () => {
-      if (game.state === 'CommitPhase' && game.commitDeadline) {
-        setTimeLeft(getTimeRemaining(Number(game.commitDeadline)));
-      } else if (game.state === 'RevealPhase' && game.revealDeadline) {
-        setTimeLeft(getTimeRemaining(Number(game.revealDeadline)));
-      }
-    };
-
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-
-    return () => clearInterval(interval);
-  }, [game]);
+  const currentDeadline =
+    game.state === 'CommitPhase' && game.commit_deadline
+      ? Number(game.commit_deadline)
+      : game.state === 'RevealPhase' && game.reveal_deadline
+      ? Number(game.reveal_deadline)
+      : null;
 
   return (
-    <Card className="hover:shadow-lg transition-shadow">
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <CardTitle className="text-lg">{game.questionText}</CardTitle>
-            <CardDescription className="mt-1">
-              Game #{game.id} • Round {game.currentRound}
-            </CardDescription>
+    <Card className="overflow-hidden game-card-hover group cursor-pointer border-border bg-card">
+      <Link href={`/game/${game.game_id}`} className="block">
+        {/* State Header Bar - Dramatic */}
+        <div className={`${stateBgColor} px-4 py-3 relative`}>
+          <div className="absolute left-0 top-0 w-1 h-full bg-white/30"></div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-white uppercase tracking-wide">
+              {stateLabel}
+            </span>
           </div>
-          <span
-            className={`px-2 py-1 text-xs rounded-full text-white ${getGameStateColor(game.state)}`}
-          >
-            {getGameStateLabel(game.state)}
-          </span>
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-2">
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <p className="text-muted-foreground">Entry Fee</p>
-            <p className="font-semibold">{formatWei(game.entryFee)} ETH</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Prize Pool</p>
-            <p className="font-semibold">{formatWei(game.prizePool)} ETH</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Players</p>
-            <p className="font-semibold">{game.totalPlayers}</p>
-          </div>
-          {timeLeft && (
-            <div>
-              <p className="text-muted-foreground">Time Left</p>
-              <p className="font-semibold">{timeLeft}</p>
+          {currentDeadline && (
+            <div className="opacity-90">
+              <TimerProgress
+                deadline={currentDeadline}
+                label=""
+                size="sm"
+              />
             </div>
           )}
         </div>
-      </CardContent>
 
-      <CardFooter>
-        <Link href={`/game/${game.id}`} className="w-full">
-          <Button className="w-full">View Game</Button>
-        </Link>
-      </CardFooter>
+        {/* Question Display */}
+        <div className="px-5 py-5 border-l-2 border-transparent group-hover:border-primary transition-colors">
+          <h3 className="text-base font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors min-h-[3rem] leading-tight">
+            {game.question_text || `Game #${game.game_id}`}
+          </h3>
+        </div>
+
+        {/* Stats Grid - Sharp & Dramatic */}
+        <div className="px-5 pb-5">
+          <div className="grid grid-cols-3 gap-3">
+            {/* Prize Pool */}
+            <div className="text-center p-3 rounded bg-gradient-to-br from-surface-elevated to-accent/5 border border-accent/20 group-hover:border-accent/40 transition-colors">
+              <div className="text-xl mb-1">💰</div>
+              <div className="text-base font-bold text-accent">
+                {formatWei(game.prize_pool)}
+              </div>
+              <div className="text-xs text-muted-foreground tracking-normal">
+                ETH
+              </div>
+            </div>
+
+            {/* Players */}
+            <div className="text-center p-3 rounded bg-gradient-to-br from-surface-elevated to-primary/5 border border-primary/20 group-hover:border-primary/40 transition-colors">
+              <div className="text-xl mb-1">👥</div>
+              <div className="text-base font-bold text-foreground">
+                {game.total_players}
+              </div>
+              <div className="text-xs text-muted-foreground tracking-normal">
+                Players
+              </div>
+            </div>
+
+            {/* Round */}
+            <div className="text-center p-3 rounded bg-gradient-to-br from-surface-elevated to-surface-elevated border border-border/30 group-hover:border-border/60 transition-colors">
+              <div className="text-xl mb-1">🎯</div>
+              <div className="text-base font-bold text-foreground">
+                R{game.current_round}
+              </div>
+              <div className="text-xs text-muted-foreground tracking-normal">
+                Round
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* CTA Button */}
+        <div className="px-5 pb-5">
+          <Button
+            variant="gradient"
+            className="w-full h-12 text-sm"
+            asChild
+          >
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-lg">▶</span>
+              <span>
+                {game.state === 'ZeroPhase' && `Join - ${formatWei(game.entry_fee)} ETH`}
+                {game.state === 'CommitPhase' && 'Vote Now'}
+                {game.state === 'RevealPhase' && 'Reveal Vote'}
+                {game.state === 'Completed' && 'View Results'}
+              </span>
+            </div>
+          </Button>
+        </div>
+
+        {/* Metadata Footer */}
+        <div className="px-5 pb-4 flex items-center justify-between border-t border-border/30 pt-3">
+          <span className="text-xs text-muted-foreground font-mono">
+            Game #{game.game_id}
+          </span>
+          <span className="text-xs text-accent font-bold">
+            {formatWei(game.entry_fee)} ETH
+          </span>
+        </div>
+      </Link>
     </Card>
   );
 }

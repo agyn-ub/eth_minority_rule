@@ -17,6 +17,8 @@ const config: Config = {
         foreground: "hsl(var(--foreground))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
+          light: "hsl(var(--primary-light))",
+          dark: "hsl(var(--primary-dark))",
           foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
@@ -33,6 +35,7 @@ const config: Config = {
         },
         accent: {
           DEFAULT: "hsl(var(--accent))",
+          glow: "hsl(var(--accent-glow))",
           foreground: "hsl(var(--accent-foreground))",
         },
         popover: {
@@ -43,25 +46,68 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
+        danger: {
+          DEFAULT: "hsl(var(--danger))",
+          foreground: "hsl(var(--danger-foreground))",
+        },
+        state: {
+          waiting: "hsl(var(--state-waiting))",
+          commit: "hsl(var(--state-commit))",
+          reveal: "hsl(var(--state-reveal))",
+          completed: "hsl(var(--state-completed))",
+        },
+        surface: {
+          DEFAULT: "hsl(var(--surface))",
+          elevated: "hsl(var(--surface-elevated))",
+        },
+      },
+      fontFamily: {
+        display: ["Montserrat", "sans-serif"],
+        body: ["Inter", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"],
+      },
+      fontSize: {
+        hero: ["2.5rem", { lineHeight: "1.2", fontWeight: "700" }],
+        h1: ["1.875rem", { lineHeight: "1.3", fontWeight: "700" }],
+        h2: ["1.5rem", { lineHeight: "1.4", fontWeight: "600" }],
+        h3: ["1.25rem", { lineHeight: "1.5", fontWeight: "600" }],
+        "body-lg": ["1rem", { lineHeight: "1.6", fontWeight: "400" }],
+      },
+      spacing: {
+        xs: "0.5rem",
+        sm: "1rem",
+        md: "1.5rem",
+        lg: "2rem",
+        xl: "3rem",
+        "2xl": "4rem",
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "1rem",
+        "2xl": "1.5rem",
+      },
+      boxShadow: {
+        sm: "0 2px 8px rgba(0, 0, 0, 0.5)",
+        DEFAULT: "0 4px 16px rgba(0, 0, 0, 0.6)",
+        lg: "0 8px 32px rgba(0, 0, 0, 0.8)",
+        "glow-red": "0 0 32px rgba(220, 38, 38, 0.5)",
+        "glow-gold": "0 0 32px rgba(245, 158, 11, 0.5)",
+        "glow-success": "0 0 24px rgba(5, 150, 105, 0.5)",
+        brutal: "0 4px 0 rgba(220, 38, 38, 0.8), 0 8px 32px rgba(0, 0, 0, 0.9)",
       },
       keyframes: {
-        "accordion-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" },
-        },
-        "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
-        },
       },
       animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
       },
     },
   },

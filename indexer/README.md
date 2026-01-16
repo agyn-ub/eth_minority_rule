@@ -47,13 +47,25 @@ cd ../supabase
 supabase start
 ```
 
-### 2. Start Anvil
+### 2. (Optional) Run User Table Migrations
+```bash
+# For local Supabase
+cd ../supabase
+supabase db push
+
+# OR for hosted Supabase
+# Run migration in Supabase SQL Editor
+```
+
+**Note:** This creates user-specific tables (user_profiles, etc.). Ponder will automatically create blockchain tables (games, players, votes, etc.) when it starts.
+
+### 3. Start Anvil
 ```bash
 cd ../solidity
 anvil
 ```
 
-### 3. Deploy Contract to Anvil
+### 4. Deploy Contract to Anvil
 ```bash
 cd ../solidity
 forge script script/Deploy.s.sol:DeployScript \
@@ -63,14 +75,14 @@ forge script script/Deploy.s.sol:DeployScript \
 # Copy the deployed contract address and update .env.local
 ```
 
-### 4. Start Indexer
+### 5. Start Indexer
 ```bash
 npm run dev
 ```
 
 The indexer will:
 - Connect to your database
-- Create/update tables based on `ponder.schema.ts`
+- Automatically create blockchain tables (games, players, votes, etc.)
 - Sync past events from block 0
 - Listen for new events in real-time
 
@@ -105,14 +117,20 @@ npm run extract-abi
 
 ## Database Schema
 
-See `ponder.schema.ts` for the full schema. Key tables:
+See `ponder.schema.ts` for the full schema.
 
-- **Game** - Game state and metadata
-- **Player** - Player participation
-- **Vote** - Vote reveals (vote history)
-- **Commit** - Vote commitments
-- **Round** - Round results
-- **Winner** - Prize distribution
+### Blockchain Tables (Created by Ponder):
+- **games** - Game state and metadata
+- **players** - Player participation
+- **votes** - Vote reveals (vote history)
+- **commits** - Vote commitments
+- **rounds** - Round results
+- **winners** - Prize distribution
+
+### User Tables (Created by Supabase migrations):
+- **user_profiles** - User display names and profiles
+
+**Note:** Ponder automatically creates and manages blockchain tables. Supabase migrations handle user-specific tables. Both are in the same database and linked by `wallet_address`.
 
 ## Monitoring
 
@@ -133,7 +151,7 @@ You can query the indexed data using:
 1. **Supabase Studio** (http://localhost:54323 for local)
 2. **Direct SQL**:
    ```bash
-   psql $DATABASE_URL -c "SELECT * FROM \"Game\";"
+   psql $DATABASE_URL -c "SELECT * FROM games;"
    ```
 3. **Ponder GraphQL API** (if enabled)
 4. **Supabase client in frontend**
@@ -171,10 +189,18 @@ Run `npm run codegen` to generate Ponder types.
 - Check Anvil is running on port 8545
 - Ensure contract has emitted events (create a game)
 
-### Schema mismatch
+### Schema mismatch or Ponder errors
 ```bash
-# Ponder will auto-migrate, but you can reset:
+# Ponder automatically creates its tables
+# If you get errors, reset the database:
+cd ../supabase
 supabase db reset
+
+# Reapply user table migrations
+supabase db push
+
+# Restart indexer (it will recreate blockchain tables)
+cd ../indexer
 npm run dev
 ```
 
@@ -191,15 +217,28 @@ npm run dev
 ┌─────────────┐
 │   Ponder    │◄─── src/index.ts (Event Handlers)
 │   Indexer   │◄─── ponder.config.ts
-│             │◄─── ponder.schema.ts
+│             │◄─── ponder.schema.ts (creates blockchain tables)
 └──────┬──────┘
        │
        ▼
-┌─────────────┐
-│  Supabase   │◄─── PostgreSQL Database
-│  Postgres   │     (Indexed Game Data)
-└─────────────┘
+┌──────────────────────────────────────┐
+│       Supabase Postgres Database     │
+├──────────────────────────────────────┤
+│ Blockchain Tables (Ponder creates): │
+│ - games, players, votes, commits,   │
+│   rounds, winners                    │
+│                                      │
+│ User Tables (Migrations create):    │
+│ - user_profiles                      │
+│                                      │
+│ Linked by: wallet_address           │
+└──────────────────────────────────────┘
 ```
+
+**Key Points:**
+- **Ponder manages blockchain tables** automatically from `ponder.schema.ts`
+- **Supabase migrations manage user tables** (user_profiles, etc.)
+- **Same database, separate concerns** - linked by `wallet_address`
 
 ## Next Steps
 

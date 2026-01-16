@@ -4,48 +4,78 @@
 
 @layer base {
   :root {
+    /* Light theme - simplified for now, dark is default */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 270 85% 60%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 200 100% 55%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --ring: 270 85% 60%;
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    /* Primary Colors - LIAR GAME: Dramatic Red & Noir Black */
+    --primary: 0 85% 55%;             /* #DC2626 - Blood Red */
+    --primary-light: 0 75% 65%;       /* #EF4444 - Lighter Red */
+    --primary-dark: 0 90% 40%;        /* #991B1B - Dark Red */
+    --primary-foreground: 0 0% 100%;
+
+    --accent: 43 96% 56%;             /* #F59E0B - Gold/Amber */
+    --accent-glow: 43 96% 70%;        /* #FCD34D - Light Gold */
+    --accent-foreground: 0 0% 0%;
+
+    /* Game State Colors - More dramatic */
+    --state-waiting: 0 0% 30%;        /* Dark Gray - ZeroPhase */
+    --state-commit: 0 85% 55%;        /* Red - CommitPhase (danger/commitment) */
+    --state-reveal: 43 96% 56%;       /* Gold - RevealPhase (revelation) */
+    --state-completed: 0 0% 20%;      /* Charcoal - Completed */
+
+    /* Semantic Colors */
+    --success: 142 76% 36%;           /* #059669 - Darker Green */
+    --success-foreground: 0 0% 100%;
+    --warning: 43 96% 56%;            /* #F59E0B - Gold */
+    --warning-foreground: 0 0% 0%;
+    --danger: 0 85% 55%;              /* #DC2626 - Red */
+    --danger-foreground: 0 0% 100%;
+    --destructive: 0 85% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Background & Surface - Pure Noir */
+    --background: 0 0% 5%;            /* #0D0D0D - Almost Black */
+    --foreground: 0 0% 98%;           /* Crisp White */
+
+    --card: 0 0% 8%;                  /* #141414 - Dark Cards */
+    --card-foreground: 0 0% 98%;
+
+    --surface: 0 0% 8%;               /* Same as card */
+    --surface-elevated: 0 0% 12%;     /* #1F1F1F - Slightly elevated */
+
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 98%;
+
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 55%;     /* Gray text */
+
+    --border: 0 0% 18%;               /* #2E2E2E - Subtle borders */
+    --input: 0 0% 18%;
+    --ring: 0 85% 55%;                /* Red focus ring */
   }
 }
 
@@ -55,5 +85,71 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Custom Utility Classes - LIAR GAME THEME */
+@layer utilities {
+  /* Gradient Backgrounds */
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-dark)) 100%);
+  }
+
+  .bg-gradient-danger {
+    background: linear-gradient(135deg, hsl(var(--danger)) 0%, hsl(0 90% 35%) 100%);
+  }
+
+  .bg-gradient-gold {
+    background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(43 96% 46%) 100%);
+  }
+
+  .bg-gradient-success {
+    background: linear-gradient(135deg, hsl(var(--success)) 0%, hsl(142 76% 26%) 100%);
+  }
+
+  /* Removed heavy glow effects for performance */
+
+  /* Game Card Hover Effect - Fast and simple */
+  .game-card-hover {
+    transition: border-color 0.15s ease, transform 0.15s ease;
+    border: 1px solid transparent;
+  }
+
+  .game-card-hover:hover {
+    transform: translateY(-2px);
+    border-color: hsl(var(--primary));
+  }
+
+  /* Removed text glow effects for performance */
+
+  /* Border accent */
+  .border-accent-red {
+    border-left: 4px solid hsl(var(--primary));
+  }
+
+  .border-accent-gold {
+    border-left: 4px solid hsl(var(--accent));
+  }
+}
+
+/* Utility Classes */
+@layer utilities {
+  /* Scale on hover */
+  .hover-scale {
+    transition: transform 0.2s ease-in-out;
+  }
+
+  .hover-scale:hover {
+    transform: scale(1.02);
+  }
+
+  /* Lift effect */
+  .hover-lift {
+    transition: all 0.2s ease-in-out;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   }
 }

@@ -1,69 +1,79 @@
-import { createSchema } from "@ponder/core";
+import { onchainTable, primaryKey } from "@ponder/core";
 
-export default createSchema((p) => ({
-  Game: p.createTable({
-    id: p.bigint(),
-    questionText: p.string(),
-    entryFee: p.string(), // Store as string to handle big numbers
-    creatorAddress: p.string(),
-    state: p.string(), // ZeroPhase, CommitPhase, RevealPhase, Completed
-    currentRound: p.int(),
-    totalPlayers: p.int(),
-    prizePool: p.string(),
-    commitDeadline: p.bigint().optional(),
-    revealDeadline: p.bigint().optional(),
-    blockNumber: p.bigint(),
-    transactionHash: p.string(),
-  }),
+export const games = onchainTable("games", (p) => ({
+  game_id: p.bigint().primaryKey(),
+  question_text: p.text().notNull(),
+  entry_fee: p.text().notNull(), // NUMERIC(78,0) stored as string
+  creator_address: p.text().notNull(),
+  state: p.text().notNull(), // ZeroPhase, CommitPhase, RevealPhase, Completed
+  current_round: p.integer().notNull(),
+  total_players: p.integer().notNull(),
+  prize_pool: p.text().notNull(), // NUMERIC(78,0) stored as string
+  commit_deadline: p.bigint(),
+  reveal_deadline: p.bigint(),
+  created_at: p.text().notNull(),
+  updated_at: p.text().notNull(),
+  block_number: p.bigint().notNull(),
+  transaction_hash: p.text().notNull(),
+}));
 
-  Player: p.createTable({
-    id: p.string(), // Composite key: gameId-playerAddress
-    gameId: p.bigint().references("Game.id"),
-    playerAddress: p.string(),
-    joinedAmount: p.string(),
-    blockNumber: p.bigint(),
-    transactionHash: p.string(),
-  }),
+export const players = onchainTable("players", (p) => ({
+  game_id: p.bigint().notNull(),
+  player_address: p.text().notNull(),
+  joined_amount: p.text().notNull(), // NUMERIC(78,0) stored as string
+  joined_at: p.text().notNull(),
+  block_number: p.bigint().notNull(),
+  transaction_hash: p.text().notNull(),
+}), (table) => ({
+  pk: primaryKey({ columns: [table.game_id, table.player_address] })
+}));
 
-  Vote: p.createTable({
-    id: p.string(), // Composite key: gameId-round-playerAddress
-    gameId: p.bigint().references("Game.id"),
-    round: p.int(),
-    playerAddress: p.string(),
-    vote: p.boolean(),
-    blockNumber: p.bigint(),
-    transactionHash: p.string(),
-  }),
+export const votes = onchainTable("votes", (p) => ({
+  game_id: p.bigint().notNull(),
+  round: p.integer().notNull(),
+  player_address: p.text().notNull(),
+  vote: p.boolean().notNull(), // true = yes, false = no
+  revealed_at: p.text().notNull(),
+  block_number: p.bigint().notNull(),
+  transaction_hash: p.text().notNull(),
+}), (table) => ({
+  pk: primaryKey({ columns: [table.game_id, table.round, table.player_address] })
+}));
 
-  Commit: p.createTable({
-    id: p.string(), // Composite key: gameId-round-playerAddress
-    gameId: p.bigint().references("Game.id"),
-    round: p.int(),
-    playerAddress: p.string(),
-    commitHash: p.string(),
-    blockNumber: p.bigint(),
-    transactionHash: p.string(),
-  }),
+export const commits = onchainTable("commits", (p) => ({
+  game_id: p.bigint().notNull(),
+  round: p.integer().notNull(),
+  player_address: p.text().notNull(),
+  commit_hash: p.text().notNull(),
+  committed_at: p.text().notNull(),
+  block_number: p.bigint().notNull(),
+  transaction_hash: p.text().notNull(),
+}), (table) => ({
+  pk: primaryKey({ columns: [table.game_id, table.round, table.player_address] })
+}));
 
-  Round: p.createTable({
-    id: p.string(), // Composite key: gameId-round
-    gameId: p.bigint().references("Game.id"),
-    round: p.int(),
-    yesCount: p.int(),
-    noCount: p.int(),
-    minorityVote: p.boolean(),
-    remainingPlayers: p.int(),
-    blockNumber: p.bigint(),
-    transactionHash: p.string(),
-  }),
+export const rounds = onchainTable("rounds", (p) => ({
+  game_id: p.bigint().notNull(),
+  round: p.integer().notNull(),
+  yes_count: p.integer().notNull(),
+  no_count: p.integer().notNull(),
+  minority_vote: p.boolean().notNull(),
+  remaining_players: p.integer().notNull(),
+  completed_at: p.text().notNull(),
+  block_number: p.bigint().notNull(),
+  transaction_hash: p.text().notNull(),
+}), (table) => ({
+  pk: primaryKey({ columns: [table.game_id, table.round] })
+}));
 
-  Winner: p.createTable({
-    id: p.string(), // Composite key: gameId-playerAddress
-    gameId: p.bigint().references("Game.id"),
-    playerAddress: p.string(),
-    prizeAmount: p.string(),
-    platformFee: p.string(),
-    blockNumber: p.bigint(),
-    transactionHash: p.string(),
-  }),
+export const winners = onchainTable("winners", (p) => ({
+  game_id: p.bigint().notNull(),
+  player_address: p.text().notNull(),
+  prize_amount: p.text().notNull(), // NUMERIC(78,0) stored as string
+  platform_fee: p.text().notNull(), // NUMERIC(78,0) stored as string
+  paid_at: p.text().notNull(),
+  block_number: p.bigint().notNull(),
+  transaction_hash: p.text().notNull(),
+}), (table) => ({
+  pk: primaryKey({ columns: [table.game_id, table.player_address] })
 }));

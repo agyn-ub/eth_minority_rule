@@ -12,78 +12,85 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // Type-safe query helpers matching Ponder schema
 
 export interface Game {
-  id: string;                    // bigint as string
-  questionText: string;
-  entryFee: string;
-  creatorAddress: string;
+  game_id: string;               // bigint as string
+  question_text: string;
+  entry_fee: string;
+  creator_address: string;
   state: string;                 // ZeroPhase, CommitPhase, RevealPhase, Completed
-  currentRound: number;
-  totalPlayers: number;
-  prizePool: string;
-  commitDeadline?: string;       // bigint as string (nullable)
-  revealDeadline?: string;       // bigint as string (nullable)
-  blockNumber: string;           // bigint as string
-  transactionHash: string;
+  current_round: number;
+  total_players: number;
+  prize_pool: string;
+  commit_deadline?: string;      // bigint as string (nullable)
+  reveal_deadline?: string;      // bigint as string (nullable)
+  created_at: string;
+  updated_at: string;
+  block_number: string;          // bigint as string
+  transaction_hash: string;
 }
 
 export interface Player {
   id: string;                    // Composite: "gameId-playerAddress"
-  gameId: string;                // bigint as string
-  playerAddress: string;
-  joinedAmount: string;
-  blockNumber: string;           // bigint as string
-  transactionHash: string;
+  game_id: string;               // bigint as string
+  player_address: string;
+  joined_amount: string;
+  joined_at: string;
+  block_number: string;          // bigint as string
+  transaction_hash: string;
 }
 
 export interface Vote {
   id: string;                    // Composite: "gameId-round-playerAddress"
-  gameId: string;                // bigint as string
+  game_id: string;               // bigint as string
   round: number;
-  playerAddress: string;
+  player_address: string;
   vote: boolean;
-  blockNumber: string;           // bigint as string
-  transactionHash: string;
+  revealed_at: string;
+  block_number: string;          // bigint as string
+  transaction_hash: string;
 }
 
 export interface Commit {
   id: string;                    // Composite: "gameId-round-playerAddress"
-  gameId: string;                // bigint as string
+  game_id: string;               // bigint as string
   round: number;
-  playerAddress: string;
-  commitHash: string;
-  blockNumber: string;           // bigint as string
-  transactionHash: string;
+  player_address: string;
+  commit_hash: string;
+  committed_at: string;
+  block_number: string;          // bigint as string
+  transaction_hash: string;
 }
 
 export interface Round {
   id: string;                    // Composite: "gameId-round"
-  gameId: string;                // bigint as string
+  game_id: string;               // bigint as string
   round: number;
-  yesCount: number;
-  noCount: number;
-  minorityVote: boolean;
-  remainingPlayers: number;
-  blockNumber: string;           // bigint as string
-  transactionHash: string;
+  yes_count: number;
+  no_count: number;
+  minority_vote: boolean;
+  remaining_players: number;
+  completed_at: string;
+  block_number: string;          // bigint as string
+  transaction_hash: string;
 }
 
 export interface Winner {
   id: string;                    // Composite: "gameId-playerAddress"
-  gameId: string;                // bigint as string
-  playerAddress: string;
-  prizeAmount: string;
-  platformFee: string;
-  blockNumber: string;           // bigint as string
-  transactionHash: string;
+  game_id: string;               // bigint as string
+  player_address: string;
+  prize_amount: string;
+  platform_fee: string;
+  paid_at: string;
+  block_number: string;          // bigint as string
+  transaction_hash: string;
 }
 
 // Query functions
 
 export const getGame = async (gameId: number | string): Promise<Game | null> => {
   const { data, error } = await supabase
-    .from('Game')
+    .from('games')
     .select('*')
-    .eq('id', gameId.toString())
+    .eq('game_id', gameId.toString())
     .single();
 
   if (error) {
@@ -95,10 +102,10 @@ export const getGame = async (gameId: number | string): Promise<Game | null> => 
 
 export const getActiveGames = async (): Promise<Game[]> => {
   const { data, error } = await supabase
-    .from('Game')
+    .from('games')
     .select('*')
     .in('state', ['ZeroPhase', 'CommitPhase', 'RevealPhase'])
-    .order('blockNumber', { ascending: false });
+    .order('block_number', { ascending: false });
 
   if (error) {
     console.error('Error fetching active games:', error);
@@ -109,10 +116,10 @@ export const getActiveGames = async (): Promise<Game[]> => {
 
 export const getCompletedGames = async (): Promise<Game[]> => {
   const { data, error } = await supabase
-    .from('Game')
+    .from('games')
     .select('*')
     .eq('state', 'Completed')
-    .order('blockNumber', { ascending: false })
+    .order('block_number', { ascending: false })
     .limit(20);
 
   if (error) {
@@ -124,10 +131,10 @@ export const getCompletedGames = async (): Promise<Game[]> => {
 
 export const getGamePlayers = async (gameId: number | string): Promise<Player[]> => {
   const { data, error } = await supabase
-    .from('Player')
+    .from('players')
     .select('*')
-    .eq('gameId', gameId.toString())
-    .order('blockNumber', { ascending: true });
+    .eq('game_id', gameId.toString())
+    .order('block_number', { ascending: true });
 
   if (error) {
     console.error('Error fetching players:', error);
@@ -138,15 +145,15 @@ export const getGamePlayers = async (gameId: number | string): Promise<Player[]>
 
 export const getGameVotes = async (gameId: number | string, round?: number): Promise<Vote[]> => {
   let query = supabase
-    .from('Vote')
+    .from('votes')
     .select('*')
-    .eq('gameId', gameId.toString());
+    .eq('game_id', gameId.toString());
 
   if (round !== undefined) {
     query = query.eq('round', round);
   }
 
-  const { data, error } = await query.order('blockNumber', { ascending: true });
+  const { data, error } = await query.order('block_number', { ascending: true });
 
   if (error) {
     console.error('Error fetching votes:', error);
@@ -157,15 +164,15 @@ export const getGameVotes = async (gameId: number | string, round?: number): Pro
 
 export const getGameCommits = async (gameId: number | string, round?: number): Promise<Commit[]> => {
   let query = supabase
-    .from('Commit')
+    .from('commits')
     .select('*')
-    .eq('gameId', gameId.toString());
+    .eq('game_id', gameId.toString());
 
   if (round !== undefined) {
     query = query.eq('round', round);
   }
 
-  const { data, error } = await query.order('blockNumber', { ascending: true });
+  const { data, error } = await query.order('block_number', { ascending: true });
 
   if (error) {
     console.error('Error fetching commits:', error);
@@ -176,9 +183,9 @@ export const getGameCommits = async (gameId: number | string, round?: number): P
 
 export const getGameRounds = async (gameId: number | string): Promise<Round[]> => {
   const { data, error } = await supabase
-    .from('Round')
+    .from('rounds')
     .select('*')
-    .eq('gameId', gameId.toString())
+    .eq('game_id', gameId.toString())
     .order('round', { ascending: true });
 
   if (error) {
@@ -190,9 +197,9 @@ export const getGameRounds = async (gameId: number | string): Promise<Round[]> =
 
 export const getGameWinners = async (gameId: number | string): Promise<Winner[]> => {
   const { data, error} = await supabase
-    .from('Winner')
+    .from('winners')
     .select('*')
-    .eq('gameId', gameId.toString());
+    .eq('game_id', gameId.toString());
 
   if (error) {
     console.error('Error fetching winners:', error);
@@ -203,10 +210,10 @@ export const getGameWinners = async (gameId: number | string): Promise<Winner[]>
 
 export const getPlayerGames = async (playerAddress: string): Promise<Player[]> => {
   const { data, error } = await supabase
-    .from('Player')
+    .from('players')
     .select('*')
-    .eq('playerAddress', playerAddress.toLowerCase())
-    .order('blockNumber', { ascending: false });
+    .eq('player_address', playerAddress.toLowerCase())
+    .order('block_number', { ascending: false });
 
   if (error) {
     console.error('Error fetching player games:', error);
@@ -217,14 +224,42 @@ export const getPlayerGames = async (playerAddress: string): Promise<Player[]> =
 
 export const getPlayerWins = async (playerAddress: string): Promise<Winner[]> => {
   const { data, error } = await supabase
-    .from('Winner')
+    .from('winners')
     .select('*')
-    .eq('playerAddress', playerAddress.toLowerCase())
-    .order('blockNumber', { ascending: false});
+    .eq('player_address', playerAddress.toLowerCase())
+    .order('block_number', { ascending: false});
 
   if (error) {
     console.error('Error fetching player wins:', error);
     return [];
   }
   return data || [];
+};
+
+export const getMyGames = async (creatorAddress: string): Promise<Game[]> => {
+  const { data, error } = await supabase
+    .from('games')
+    .select('*')
+    .eq('creator_address', creatorAddress.toLowerCase())
+    .order('block_number', { ascending: false});
+
+  if (error) {
+    console.error('Error fetching my games:', error);
+    return [];
+  }
+  return data || [];
+};
+
+export const getGameCommitCount = async (gameId: number | string): Promise<number> => {
+  const { count, error } = await supabase
+    .from('commits')
+    .select('*', { count: 'exact', head: true })
+    .eq('game_id', gameId.toString());
+
+  if (error) {
+    console.error('Error counting commits:', error);
+    return 0;
+  }
+
+  return count || 0;
 };

@@ -90,15 +90,11 @@ export function ConnectButton() {
   }
 
   return (
-    <div className="flex gap-2">
-      {connectors.map((connector) => (
-        <Button
-          key={connector.id}
-          onClick={() => connect({ connector })}
-        >
-          Connect {connector.name}
-        </Button>
-      ))}
-    </div>
+    <Button
+      onClick={() => connect({ connector: connectors[0] })}
+      variant="default"
+    >
+      Connect MetaMask
+    </Button>
   );
 }

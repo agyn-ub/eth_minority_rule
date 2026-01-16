@@ -2,14 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { keccak256, encodePacked, hexToBytes } from 'viem';
+import { keccak256, encodePacked } from 'viem';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { getContractAddress, MinorityRuleGameAbi } from '@/lib/contracts';
 import { useToast } from '@/hooks/use-toast';
 import { useGameMutations } from '@/hooks/mutations/use-game-mutations';
+import { AlertCircle, Info } from 'lucide-react';
 
 interface VoteData {
   vote: boolean;
@@ -92,124 +93,229 @@ export function VoteCommitForm({ gameId, currentRound }: VoteCommitFormProps) {
       });
     } catch (error) {
       console.error('Error submitting commit:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to submit commit. Please try again.',
-        variant: 'destructive',
-      });
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+      // Specific error messages
+      if (errorMessage.includes('insufficient funds')) {
+        toast({
+          title: 'Insufficient Funds',
+          description: 'You don\'t have enough ETH to complete this transaction.',
+          variant: 'destructive',
+        });
+      } else if (errorMessage.includes('user rejected') || errorMessage.includes('User rejected')) {
+        toast({
+          title: 'Transaction Cancelled',
+          description: 'You cancelled the transaction in MetaMask.',
+        });
+      } else if (errorMessage.includes('nonce')) {
+        toast({
+          title: 'Transaction Error',
+          description: 'Transaction failed due to nonce issue. Please try again.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: errorMessage.length > 100 ? 'Failed to submit commit. Please try again.' : errorMessage,
+          variant: 'destructive',
+        });
+      }
     }
+  };
+
+  const downloadSalt = () => {
+    if (!committedVoteData) return;
+    const content = `Minority Rule Game - Vote Salt
+
+Game ID: ${committedVoteData.gameId}
+Round: ${committedVoteData.round}
+Your Vote: ${committedVoteData.vote ? 'YES' : 'NO'}
+Your Salt: ${committedVoteData.salt}
+Address: ${committedVoteData.address}
+
+⚠️ IMPORTANT: You need this salt to reveal your vote!
+Keep this file safe and come back to reveal your vote during the reveal phase.
+`;
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `vote-salt-game${committedVoteData.gameId}-round${committedVoteData.round}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   // Show loading state while transaction is processing
   if (isPending || isConfirming) {
     return (
-      <Card>
+      <Card className="border-primary/50">
         <CardHeader>
           <CardTitle>Committing Vote...</CardTitle>
           <CardDescription>
-            {isPending && 'Please confirm the transaction in MetaMask'}
-            {isConfirming && 'Waiting for blockchain confirmation...'}
+            {isPending && '⏳ Please confirm the transaction in your wallet'}
+            {isConfirming && '⏳ Waiting for blockchain confirmation...'}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary border-t-transparent"></div>
         </CardContent>
       </Card>
     );
   }
 
-  return (
-    <>
-    <Card>
-      <CardHeader>
-        <CardTitle>Submit Your Vote (Commit Phase)</CardTitle>
-        <CardDescription>
-          Your vote will be hidden until the reveal phase. Make sure to come back to reveal it!
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <Label>Choose your answer:</Label>
-          <div className="flex gap-4 mt-2">
-            <Button
-              variant={selectedVote === true ? 'default' : 'outline'}
-              className="flex-1"
-              onClick={() => setSelectedVote(true)}
-            >
-              YES
-            </Button>
-            <Button
-              variant={selectedVote === false ? 'default' : 'outline'}
-              className="flex-1"
-              onClick={() => setSelectedVote(false)}
-            >
-              NO
-            </Button>
-          </div>
-        </div>
-
-        <Button
-          onClick={handleSubmitCommit}
-          disabled={selectedVote === null || isPending || isConfirming}
-          className="w-full"
-        >
-          {isPending || isConfirming ? 'Committing...' : 'Commit Vote'}
-        </Button>
-
-        <p className="text-xs text-muted-foreground">
-          Note: Your vote will be stored securely in your browser. You'll need to reveal it in the
-          next phase to have it counted.
-        </p>
-      </CardContent>
-    </Card>
-
-    {isSuccess && committedVoteData && (
-      <Card className="border-green-500 bg-green-50">
+  // Show success state with salt backup
+  if (isSuccess && committedVoteData) {
+    return (
+      <Card className="border-success/50 bg-success/10">
         <CardHeader>
-          <CardTitle className="text-green-700">✅ Vote Committed Successfully</CardTitle>
+          <CardTitle className="text-success">✅ Vote Committed Successfully!</CardTitle>
           <CardDescription>
-            Save this information to reveal your vote later
+            Your {committedVoteData.vote ? 'YES' : 'NO'} vote is encrypted on-chain
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div>
-            <Label>Your Vote</Label>
-            <p className="font-semibold text-lg">{committedVoteData.vote ? 'YES' : 'NO'}</p>
-          </div>
-
-          <div>
-            <Label>Your Salt (Save This!)</Label>
-            <div className="flex gap-2 mt-1">
+        <CardContent className="space-y-4">
+          {/* Critical Salt Section */}
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold text-destructive">
+              ⚠️ Save your secret salt (required to reveal)
+            </Label>
+            <div className="flex gap-2">
               <Input
                 value={committedVoteData.salt}
                 readOnly
-                className="font-mono text-xs"
+                className="font-mono text-xs bg-background/50"
               />
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => {
                   navigator.clipboard.writeText(committedVoteData.salt);
-                  toast({ title: 'Salt copied to clipboard!' });
+                  toast({ title: 'Salt copied to clipboard' });
                 }}
               >
                 Copy
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              ⚠️ You'll need this exact salt to reveal your vote. Save it somewhere safe!
-            </p>
           </div>
 
-          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
-            <p className="text-xs text-yellow-800">
-              <strong>Important:</strong> If you lose this salt or clear your browser data,
-              you will not be able to reveal your vote!
-            </p>
+          {/* Action Buttons */}
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={downloadSalt}
+              className="flex-1"
+            >
+              Download Backup
+            </Button>
+            <Button
+              onClick={() => setCommittedVoteData(null)}
+              className="flex-1"
+            >
+              Done
+            </Button>
           </div>
+
+          {/* Compact Warning */}
+          <p className="text-xs text-muted-foreground">
+            Your salt is saved in browser storage, but download a backup to be safe.
+            Without it, you cannot reveal your vote.
+          </p>
         </CardContent>
       </Card>
-    )}
-    </>
+    );
+  }
+
+  // Main vote selection interface
+  return (
+    <Card className="border-primary/30 bg-gradient-to-br from-card to-primary/5 overflow-hidden relative">
+      <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-primary via-accent to-primary"></div>
+      <CardHeader>
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-2 h-2 bg-primary"></div>
+          <CardTitle className="text-lg font-bold tracking-normal">
+            Cast your <span className="text-primary">vote</span>
+          </CardTitle>
+        </div>
+        <CardDescription className="text-base">
+          Encrypted and hidden on blockchain until reveal phase
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="text-center border-l-4 border-accent pl-4">
+          <p className="text-base font-semibold">Choose wisely. Trust no one.</p>
+        </div>
+
+        {/* Large Vote Button Cards - Dramatic Liar Game Style */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* YES Button */}
+          <button
+            onClick={() => setSelectedVote(true)}
+            className={`
+              relative p-10 rounded-lg border-2 transition-colors group
+              ${selectedVote === true
+                ? 'border-success bg-gradient-to-br from-success/20 to-success/5'
+                : 'border-border/50 bg-card hover:border-success/50 hover:bg-success/5'
+              }
+            `}
+          >
+            <div className="text-center space-y-4">
+              {selectedVote === true && (
+                <div className="absolute top-4 right-4 text-success text-xl font-bold">✓</div>
+              )}
+              <div className="text-5xl">👍</div>
+              <div className="text-xl font-bold text-foreground uppercase tracking-normal">YES</div>
+              <div className="h-1 w-16 bg-success mx-auto"></div>
+            </div>
+          </button>
+
+          {/* NO Button */}
+          <button
+            onClick={() => setSelectedVote(false)}
+            className={`
+              relative p-10 rounded-lg border-2 transition-colors group
+              ${selectedVote === false
+                ? 'border-primary bg-gradient-to-br from-primary/20 to-primary/5'
+                : 'border-border/50 bg-card hover:border-primary/50 hover:bg-primary/5'
+              }
+            `}
+          >
+            <div className="text-center space-y-4">
+              {selectedVote === false && (
+                <div className="absolute top-4 right-4 text-primary text-xl font-bold">✓</div>
+              )}
+              <div className="text-5xl">👎</div>
+              <div className="text-xl font-bold text-foreground uppercase tracking-normal">NO</div>
+              <div className="h-1 w-16 bg-primary mx-auto"></div>
+            </div>
+          </button>
+        </div>
+
+        {/* Submit Button */}
+        <Button
+          onClick={handleSubmitCommit}
+          disabled={selectedVote === null}
+          variant="gradient"
+          size="lg"
+          className="w-full h-16 text-base"
+        >
+          {selectedVote === null ? '⚠ Select Your Vote First' : `⚡ Commit ${selectedVote ? 'YES' : 'NO'} Vote`}
+        </Button>
+
+        {/* Info Box */}
+        <div className="p-5 bg-black/30 border-l-4 border-accent rounded-lg">
+          <div className="flex items-start gap-3">
+            <div className="text-xl">🔐</div>
+            <div>
+              <p className="text-xs font-semibold text-accent mb-1 tracking-normal">Cryptographic commitment</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Your vote will be encrypted with a random salt. Save the salt to reveal later.
+                Nobody can see your vote until you reveal it!
+              </p>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

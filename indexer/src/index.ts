@@ -1,22 +1,25 @@
 import { ponder } from "@/generated";
+import * as schema from "../ponder.schema";
 
 // ============ GameCreated Event ============
 ponder.on("MinorityRuleGame:GameCreated", async ({ event, context }) => {
-  await context.db.Game.create({
-    id: event.args.gameId,
-    data: {
-      questionText: event.args.questionText,
-      entryFee: event.args.entryFee.toString(),
-      creatorAddress: event.args.creator.toLowerCase(),
-      state: "ZeroPhase", // Initial state
-      currentRound: 1,
-      totalPlayers: 0,
-      prizePool: "0",
-      commitDeadline: undefined,
-      revealDeadline: undefined,
-      blockNumber: event.block.number,
-      transactionHash: event.transaction.hash,
-    },
+  const timestamp = new Date(Number(event.block.timestamp) * 1000).toISOString();
+
+  await context.db.insert(schema.games).values({
+    game_id: event.args.gameId,
+    question_text: event.args.questionText,
+    entry_fee: event.args.entryFee.toString(),
+    creator_address: event.args.creator.toLowerCase(),
+    state: "ZeroPhase",
+    current_round: 1,
+    total_players: 0,
+    prize_pool: "0",
+    commit_deadline: undefined,
+    reveal_deadline: undefined,
+    created_at: timestamp,
+    updated_at: timestamp,
+    block_number: event.block.number,
+    transaction_hash: event.transaction.hash,
   });
 
   console.log(`✅ Game ${event.args.gameId} created by ${event.args.creator}`);
@@ -24,46 +27,40 @@ ponder.on("MinorityRuleGame:GameCreated", async ({ event, context }) => {
 
 // ============ PlayerJoined Event ============
 ponder.on("MinorityRuleGame:PlayerJoined", async ({ event, context }) => {
-  const playerId = `${event.args.gameId}-${event.args.player.toLowerCase()}`;
+  const timestamp = new Date(Number(event.block.timestamp) * 1000).toISOString();
 
   // Insert player record
-  await context.db.Player.create({
-    id: playerId,
-    data: {
-      gameId: event.args.gameId,
-      playerAddress: event.args.player.toLowerCase(),
-      joinedAmount: event.args.amount.toString(),
-      blockNumber: event.block.number,
-      transactionHash: event.transaction.hash,
-    },
+  await context.db.insert(schema.players).values({
+    game_id: event.args.gameId,
+    player_address: event.args.player.toLowerCase(),
+    joined_amount: event.args.amount.toString(),
+    joined_at: timestamp,
+    block_number: event.block.number,
+    transaction_hash: event.transaction.hash,
   });
 
   // Update game
-  await context.db.Game.update({
-    id: event.args.gameId,
-    data: ({ current }) => ({
-      totalPlayers: event.args.totalPlayers,
-      prizePool: (BigInt(current.prizePool) + event.args.amount).toString(),
-    }),
-  });
+  await context.db.update(schema.games, { game_id: event.args.gameId }).set((row) => ({
+    total_players: event.args.totalPlayers,
+    prize_pool: (BigInt(row.prize_pool) + event.args.amount).toString(),
+    updated_at: timestamp,
+  }));
 
   console.log(`✅ Player ${event.args.player} joined game ${event.args.gameId}`);
 });
 
 // ============ VoteCommitted Event ============
 ponder.on("MinorityRuleGame:VoteCommitted", async ({ event, context }) => {
-  const commitId = `${event.args.gameId}-${event.args.round}-${event.args.player.toLowerCase()}`;
+  const timestamp = new Date(Number(event.block.timestamp) * 1000).toISOString();
 
-  await context.db.Commit.create({
-    id: commitId,
-    data: {
-      gameId: event.args.gameId,
-      round: event.args.round,
-      playerAddress: event.args.player.toLowerCase(),
-      commitHash: event.args.commitHash,
-      blockNumber: event.block.number,
-      transactionHash: event.transaction.hash,
-    },
+  await context.db.insert(schema.commits).values({
+    game_id: event.args.gameId,
+    round: event.args.round,
+    player_address: event.args.player.toLowerCase(),
+    commit_hash: event.args.commitHash,
+    committed_at: timestamp,
+    block_number: event.block.number,
+    transaction_hash: event.transaction.hash,
   });
 
   console.log(
@@ -73,18 +70,16 @@ ponder.on("MinorityRuleGame:VoteCommitted", async ({ event, context }) => {
 
 // ============ VoteRevealed Event ============
 ponder.on("MinorityRuleGame:VoteRevealed", async ({ event, context }) => {
-  const voteId = `${event.args.gameId}-${event.args.round}-${event.args.player.toLowerCase()}`;
+  const timestamp = new Date(Number(event.block.timestamp) * 1000).toISOString();
 
-  await context.db.Vote.create({
-    id: voteId,
-    data: {
-      gameId: event.args.gameId,
-      round: event.args.round,
-      playerAddress: event.args.player.toLowerCase(),
-      vote: event.args.vote,
-      blockNumber: event.block.number,
-      transactionHash: event.transaction.hash,
-    },
+  await context.db.insert(schema.votes).values({
+    game_id: event.args.gameId,
+    round: event.args.round,
+    player_address: event.args.player.toLowerCase(),
+    vote: event.args.vote,
+    revealed_at: timestamp,
+    block_number: event.block.number,
+    transaction_hash: event.transaction.hash,
   });
 
   const voteText = event.args.vote ? "YES" : "NO";
@@ -95,13 +90,13 @@ ponder.on("MinorityRuleGame:VoteRevealed", async ({ event, context }) => {
 
 // ============ CommitPhaseStarted Event ============
 ponder.on("MinorityRuleGame:CommitPhaseStarted", async ({ event, context }) => {
-  await context.db.Game.update({
-    id: event.args.gameId,
-    data: {
-      state: "CommitPhase",
-      currentRound: event.args.round,
-      commitDeadline: event.args.deadline,
-    },
+  const timestamp = new Date(Number(event.block.timestamp) * 1000).toISOString();
+
+  await context.db.update(schema.games, { game_id: event.args.gameId }).set({
+    state: "CommitPhase",
+    current_round: event.args.round,
+    commit_deadline: event.args.deadline,
+    updated_at: timestamp,
   });
 
   console.log(
@@ -111,12 +106,12 @@ ponder.on("MinorityRuleGame:CommitPhaseStarted", async ({ event, context }) => {
 
 // ============ RevealPhaseStarted Event ============
 ponder.on("MinorityRuleGame:RevealPhaseStarted", async ({ event, context }) => {
-  await context.db.Game.update({
-    id: event.args.gameId,
-    data: {
-      state: "RevealPhase",
-      revealDeadline: event.args.deadline,
-    },
+  const timestamp = new Date(Number(event.block.timestamp) * 1000).toISOString();
+
+  await context.db.update(schema.games, { game_id: event.args.gameId }).set({
+    state: "RevealPhase",
+    reveal_deadline: event.args.deadline,
+    updated_at: timestamp,
   });
 
   console.log(
@@ -126,21 +121,19 @@ ponder.on("MinorityRuleGame:RevealPhaseStarted", async ({ event, context }) => {
 
 // ============ RoundCompleted Event ============
 ponder.on("MinorityRuleGame:RoundCompleted", async ({ event, context }) => {
-  const roundId = `${event.args.gameId}-${event.args.round}`;
+  const timestamp = new Date(Number(event.block.timestamp) * 1000).toISOString();
 
   // Insert round result
-  await context.db.Round.create({
-    id: roundId,
-    data: {
-      gameId: event.args.gameId,
-      round: event.args.round,
-      yesCount: event.args.yesCount,
-      noCount: event.args.noCount,
-      minorityVote: event.args.minorityVote,
-      remainingPlayers: event.args.votesRemaining,
-      blockNumber: event.block.number,
-      transactionHash: event.transaction.hash,
-    },
+  await context.db.insert(schema.rounds).values({
+    game_id: event.args.gameId,
+    round: event.args.round,
+    yes_count: event.args.yesCount,
+    no_count: event.args.noCount,
+    minority_vote: event.args.minorityVote,
+    remaining_players: event.args.votesRemaining,
+    completed_at: timestamp,
+    block_number: event.block.number,
+    transaction_hash: event.transaction.hash,
   });
 
   const minorityText = event.args.minorityVote ? "YES" : "NO";
@@ -151,28 +144,24 @@ ponder.on("MinorityRuleGame:RoundCompleted", async ({ event, context }) => {
 
 // ============ GameCompleted Event ============
 ponder.on("MinorityRuleGame:GameCompleted", async ({ event, context }) => {
+  const timestamp = new Date(Number(event.block.timestamp) * 1000).toISOString();
+
   // Update game state
-  await context.db.Game.update({
-    id: event.args.gameId,
-    data: {
-      state: "Completed",
-    },
+  await context.db.update(schema.games, { game_id: event.args.gameId }).set({
+    state: "Completed",
+    updated_at: timestamp,
   });
 
   // Insert winners
   for (const winner of event.args.winners) {
-    const winnerId = `${event.args.gameId}-${winner.toLowerCase()}`;
-
-    await context.db.Winner.create({
-      id: winnerId,
-      data: {
-        gameId: event.args.gameId,
-        playerAddress: winner.toLowerCase(),
-        prizeAmount: event.args.prizePerWinner.toString(),
-        platformFee: event.args.platformFee.toString(),
-        blockNumber: event.block.number,
-        transactionHash: event.transaction.hash,
-      },
+    await context.db.insert(schema.winners).values({
+      game_id: event.args.gameId,
+      player_address: winner.toLowerCase(),
+      prize_amount: event.args.prizePerWinner.toString(),
+      platform_fee: event.args.platformFee.toString(),
+      paid_at: timestamp,
+      block_number: event.block.number,
+      transaction_hash: event.transaction.hash,
     });
   }
 

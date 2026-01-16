@@ -55,11 +55,40 @@ export function JoinGameForm({ gameId, entryFee }: JoinGameFormProps) {
       });
     } catch (error) {
       console.error('Error joining game:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to join game. Please try again.',
-        variant: 'destructive',
-      });
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+      // Specific error messages
+      if (errorMessage.includes('insufficient funds')) {
+        toast({
+          title: 'Insufficient Funds',
+          description: `You need at least ${formatWei(entryFee)} ETH plus gas fees to join this game.`,
+          variant: 'destructive',
+        });
+      } else if (errorMessage.includes('user rejected') || errorMessage.includes('User rejected')) {
+        toast({
+          title: 'Transaction Cancelled',
+          description: 'You cancelled the transaction in MetaMask.',
+        });
+      } else if (errorMessage.includes('nonce')) {
+        toast({
+          title: 'Transaction Error',
+          description: 'Transaction failed due to nonce issue. Please try again.',
+          variant: 'destructive',
+        });
+      } else if (errorMessage.includes('AlreadyJoined') || errorMessage.includes('already joined')) {
+        toast({
+          title: 'Already Joined',
+          description: 'You have already joined this game.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: errorMessage.length > 100 ? 'Failed to join game. Please try again.' : errorMessage,
+          variant: 'destructive',
+        });
+      }
     }
   };
 
@@ -84,9 +113,9 @@ export function JoinGameForm({ gameId, entryFee }: JoinGameFormProps) {
   // Show success state after transaction confirms
   if (isSuccess) {
     return (
-      <Card className="border-green-500 bg-green-50">
+      <Card className="border-success/50 bg-success/10">
         <CardHeader>
-          <CardTitle className="text-green-700">✅ Joined Successfully!</CardTitle>
+          <CardTitle className="text-success">✅ Joined Successfully!</CardTitle>
           <CardDescription>You're now in the game</CardDescription>
         </CardHeader>
         <CardContent>

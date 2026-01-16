@@ -82,18 +82,25 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 
 ## Database Schema
 
-### Tables
+### Blockchain Tables (Created by Ponder Indexer)
 - **games** - Main game state and metadata
 - **players** - Player participation records
 - **votes** - Vote reveals (round history)
 - **commits** - Vote commitments (hashed votes)
 - **rounds** - Round results and statistics
 - **winners** - Prize distribution records
-- **indexer_state** - Tracks indexer sync progress
+
+**Note:** Ponder automatically creates and manages these tables. Do NOT create them via migrations.
+
+### User Tables (Created by Supabase Migrations)
+- **user_profiles** - User display names linked to wallet addresses
+
+### Linking
+All tables are linked via `wallet_address` / `player_address` / `creator_address`.
 
 ### Row Level Security (RLS)
-- **Public Read**: All tables allow public SELECT queries (for frontend)
-- **Service Write**: Indexer uses service role key for INSERT/UPDATE
+- **Blockchain tables**: Managed by Ponder
+- **User tables**: Public read, service write
 
 ## Useful Commands
 
@@ -114,9 +121,34 @@ supabase stop
 # Reset database (re-run migrations)
 supabase db reset
 
+# Truncate all data (keep schema, clear data only)
+psql postgresql://postgres:postgres@localhost:54322/postgres -f supabase/truncate_database.sql
+
 # Generate TypeScript types (for frontend)
 supabase gen types typescript --local > ../frontend/src/types/database.ts
 ```
+
+## Clear Database Data
+
+### Option 1: Truncate Blockchain Data (Ponder Tables)
+```bash
+# Clear blockchain tables (Ponder will recreate on restart)
+psql postgresql://postgres:postgres@localhost:54322/postgres -f supabase/truncate_database.sql
+```
+**Use this when:** You want to reindex blockchain data from scratch.
+
+### Option 2: Reset Everything
+```bash
+# Drop all tables (user + blockchain)
+supabase db reset
+
+# Reapply user table migrations
+supabase db push
+
+# Restart indexer (recreates blockchain tables)
+cd ../indexer && npm run dev
+```
+**Use this when:** You want a completely fresh start.
 
 ## Verification
 

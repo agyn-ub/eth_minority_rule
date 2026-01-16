@@ -19,3 +19,7 @@ node_modules/
 
 # MacOS
 .DS_Store
+
+# Anvil state
+.anvil-state.json
+*.anvil-state.json

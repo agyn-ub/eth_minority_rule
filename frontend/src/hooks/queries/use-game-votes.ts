@@ -20,7 +20,7 @@ export function useGameVotes(
     enabled: gameId !== undefined && options?.enabled !== false,
     refetchInterval: (query) => {
       // If querying current round during RevealPhase, poll aggressively
-      if (game && round === game.currentRound && game.state === 'RevealPhase') {
+      if (game && round === game.current_round && game.state === 'RevealPhase') {
         return 2_000; // 2 seconds - votes being revealed
       }
       // Historical rounds don't need frequent polling
@@ -47,7 +47,7 @@ export function useGameCommits(
     enabled: gameId !== undefined && options?.enabled !== false,
     refetchInterval: (query) => {
       // If querying current round during CommitPhase, poll aggressively
-      if (game && round === game.currentRound && game.state === 'CommitPhase') {
+      if (game && round === game.current_round && game.state === 'CommitPhase') {
         return 2_000; // 2 seconds - commits being submitted
       }
       // Historical rounds don't need frequent polling

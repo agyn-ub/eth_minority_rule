@@ -168,9 +168,9 @@ export function GameConfigForm({ gameId, currentState }: GameConfigFormProps) {
   // Show success state after transaction confirms
   if (isSuccess) {
     return (
-      <Card className="border-green-500 bg-green-50">
+      <Card className="border-success/50 bg-success/10">
         <CardHeader>
-          <CardTitle className="text-green-700">✅ Deadline Set Successfully!</CardTitle>
+          <CardTitle className="text-success">✅ Deadline Set Successfully!</CardTitle>
           <CardDescription>Phase has started</CardDescription>
         </CardHeader>
         <CardContent>
