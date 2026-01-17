@@ -248,7 +248,7 @@ export default function GameSettingsPage({ params }: { params: { id: string } })
               </>
             )}
 
-            {commitCount > 0 && (
+            {commitCount !== undefined && commitCount > 0 && (
               <div className="flex items-start gap-2 p-3 bg-success/10 border border-success/30 rounded-md">
                 <Check className="w-4 h-4 text-success mt-0.5" />
                 <p className="text-sm text-muted-foreground">

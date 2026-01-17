@@ -34,7 +34,7 @@ export default function GamePage() {
   } = useGameDetail(gameId);
 
   // Check if current user is the game creator
-  const isCreator = address && game?.creatorAddress
+  const isCreator = address && game?.creator_address
     ? address.toLowerCase() === game.creator_address.toLowerCase()
     : false;
 

@@ -54,6 +54,13 @@ export default function RootLayout({
                     <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-accent group-hover:w-full transition-[width]"></span>
                   </Link>
                   <Link
+                    href="/players"
+                    className="text-sm font-bold uppercase tracking-wider hover:text-accent transition-colors relative group"
+                  >
+                    Players
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-accent group-hover:w-full transition-[width]"></span>
+                  </Link>
+                  <Link
                     href="/how-it-works"
                     className="text-sm font-bold uppercase tracking-wider hover:text-accent transition-colors relative group"
                   >

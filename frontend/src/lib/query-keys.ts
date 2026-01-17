@@ -12,6 +12,12 @@
  *     - games.commits(id, round?) -> game commits
  *     - games.rounds(id) -> round history
  *     - games.winners(id) -> game winners
+ * - players
+ *   - players.all -> all players
+ *   - players.search(query) -> player search results
+ *   - players.stats(address) -> player stats overview
+ *   - players.votes(address) -> all player votes
+ *   - players.gameDetail(address, gameId) -> player's game detail
  */
 export const queryKeys = {
   // Game-related keys
@@ -31,5 +37,14 @@ export const queryKeys = {
         : ['games', 'detail', String(gameId), 'commits'] as const,
     rounds: (gameId: number | string) => ['games', 'detail', String(gameId), 'rounds'] as const,
     winners: (gameId: number | string) => ['games', 'detail', String(gameId), 'winners'] as const,
+  },
+  // Player-related keys
+  players: {
+    all: ['players'] as const,
+    search: (query: string) => ['players', 'search', query] as const,
+    stats: (address: string) => ['players', 'stats', address.toLowerCase()] as const,
+    votes: (address: string) => ['players', 'votes', address.toLowerCase()] as const,
+    gameDetail: (address: string, gameId: number | string) =>
+      ['players', 'detail', address.toLowerCase(), 'game', String(gameId)] as const,
   },
 } as const;

@@ -6,15 +6,51 @@ import { useGameLists } from '@/hooks/queries/use-games';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateGameModal } from '@/components/CreateGameModal';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Pagination } from '@/components/ui/pagination';
+
+const GAMES_PER_PAGE = 9;
 
 export default function Home() {
-  const [showCompleted, setShowCompleted] = useState(false);
+  // Tab and pagination state
+  const [activeTab, setActiveTab] = useState('ongoing');
+  const [ongoingPage, setOngoingPage] = useState(1);
+  const [newPage, setNewPage] = useState(1);
+  const [completedPage, setCompletedPage] = useState(1);
 
   // Replace manual polling with React Query
   const { activeGames, completedGames, isLoading } = useGameLists();
 
-  // Filter out ZeroPhase games - creators use /my-games to view them
-  const visibleActiveGames = activeGames.filter(game => game.state !== 'ZeroPhase');
+  // Filter games into categories
+  // Ongoing: active voting phases (CommitPhase or RevealPhase)
+  const ongoingGames = activeGames.filter(
+    (game) => game.state === 'CommitPhase' || game.state === 'RevealPhase'
+  );
+
+  // New: round 1 games (not ZeroPhase, not Completed)
+  const newGames = activeGames.filter(
+    (game) =>
+      game.current_round === 1 &&
+      game.state !== 'Completed' &&
+      game.state !== 'ZeroPhase'
+  );
+
+  // Pagination helper
+  const paginateGames = (games: typeof activeGames, currentPage: number) => {
+    const startIndex = (currentPage - 1) * GAMES_PER_PAGE;
+    const endIndex = startIndex + GAMES_PER_PAGE;
+    return games.slice(startIndex, endIndex);
+  };
+
+  // Paginated game lists
+  const paginatedOngoingGames = paginateGames(ongoingGames, ongoingPage);
+  const paginatedNewGames = paginateGames(newGames, newPage);
+  const paginatedCompletedGames = paginateGames(completedGames, completedPage);
+
+  // Calculate total pages
+  const ongoingTotalPages = Math.ceil(ongoingGames.length / GAMES_PER_PAGE);
+  const newTotalPages = Math.ceil(newGames.length / GAMES_PER_PAGE);
+  const completedTotalPages = Math.ceil(completedGames.length / GAMES_PER_PAGE);
 
   if (isLoading) {
     return (
@@ -62,7 +98,8 @@ export default function Home() {
         </div>
       </div>
 
-      {visibleActiveGames.length === 0 && completedGames.length === 0 && (
+      {/* Empty state when no games exist */}
+      {ongoingGames.length === 0 && newGames.length === 0 && completedGames.length === 0 && (
         <Card>
           <CardHeader>
             <CardTitle>No Games Yet</CardTitle>
@@ -74,44 +111,108 @@ export default function Home() {
         </Card>
       )}
 
-      {visibleActiveGames.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-3 border-l-4 border-primary pl-4">
-            <div className="w-2 h-2 bg-primary"></div>
-            <h2 className="text-lg font-bold tracking-normal">
-              Active Games <span className="text-primary">({visibleActiveGames.length})</span>
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {visibleActiveGames.map((game) => (
-              <GameCard key={game.id} game={game} />
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Tabs with game categories */}
+      {(ongoingGames.length > 0 || newGames.length > 0 || completedGames.length > 0) && (
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="w-full max-w-2xl mx-auto">
+            <TabsTrigger value="ongoing" className="flex-1">
+              Ongoing <span className="font-bold ml-1">({ongoingGames.length})</span>
+            </TabsTrigger>
+            <TabsTrigger value="new" className="flex-1">
+              New <span className="font-bold ml-1">({newGames.length})</span>
+            </TabsTrigger>
+            <TabsTrigger value="completed" className="flex-1">
+              Completed <span className="font-bold ml-1">({completedGames.length})</span>
+            </TabsTrigger>
+          </TabsList>
 
-      {completedGames.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 border-l-4 border-muted pl-4">
-              <div className="w-2 h-2 bg-muted-foreground"></div>
-              <h2 className="text-lg font-bold tracking-normal text-muted-foreground">
-                Completed Games ({completedGames.length})
-              </h2>
-            </div>
-            <Button variant="outline" size="sm" onClick={() => setShowCompleted(!showCompleted)}>
-              {showCompleted ? 'Hide' : 'Show'}
-            </Button>
-          </div>
+          {/* Ongoing Games Tab */}
+          <TabsContent value="ongoing">
+            {paginatedOngoingGames.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-center text-muted-foreground">
+                    No games in progress. New games appear here once they reach the commit phase.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {paginatedOngoingGames.map((game) => (
+                    <GameCard key={game.game_id} game={game} />
+                  ))}
+                </div>
+                <Pagination
+                  currentPage={ongoingPage}
+                  totalPages={ongoingTotalPages}
+                  onPageChange={setOngoingPage}
+                  totalItems={ongoingGames.length}
+                  itemsPerPage={GAMES_PER_PAGE}
+                />
+              </>
+            )}
+          </TabsContent>
 
-          {showCompleted && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {completedGames.map((game) => (
-                <GameCard key={game.id} game={game} />
-              ))}
-            </div>
-          )}
-        </div>
+          {/* New Games Tab */}
+          <TabsContent value="new">
+            {paginatedNewGames.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6 space-y-4">
+                  <p className="text-center text-muted-foreground">
+                    No new games available. Be the first to create one!
+                  </p>
+                  <div className="flex justify-center">
+                    <CreateGameModal trigger={<Button>Create Game</Button>} />
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {paginatedNewGames.map((game) => (
+                    <GameCard key={game.game_id} game={game} />
+                  ))}
+                </div>
+                <Pagination
+                  currentPage={newPage}
+                  totalPages={newTotalPages}
+                  onPageChange={setNewPage}
+                  totalItems={newGames.length}
+                  itemsPerPage={GAMES_PER_PAGE}
+                />
+              </>
+            )}
+          </TabsContent>
+
+          {/* Completed Games Tab */}
+          <TabsContent value="completed">
+            {paginatedCompletedGames.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-center text-muted-foreground">
+                    No completed games yet. Check back soon!
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {paginatedCompletedGames.map((game) => (
+                    <GameCard key={game.game_id} game={game} />
+                  ))}
+                </div>
+                <Pagination
+                  currentPage={completedPage}
+                  totalPages={completedTotalPages}
+                  onPageChange={setCompletedPage}
+                  totalItems={completedGames.length}
+                  itemsPerPage={GAMES_PER_PAGE}
+                />
+              </>
+            )}
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   );
