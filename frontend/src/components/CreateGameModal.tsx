@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSwitchChain } from 'wagmi';
-import { parseEther } from 'viem';
+import { parseEther, decodeEventLog } from 'viem';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Dialog,
@@ -23,6 +24,7 @@ interface CreateGameModalProps {
 }
 
 export function CreateGameModal({ trigger }: CreateGameModalProps) {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { address, chainId } = useAccount();
   const { toast } = useToast();
@@ -33,7 +35,7 @@ export function CreateGameModal({ trigger }: CreateGameModalProps) {
   const [entryFee, setEntryFee] = useState('0.01');
 
   const { writeContract, data: hash, isPending, reset } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+  const { isLoading: isConfirming, isSuccess, data: receipt } = useWaitForTransactionReceipt({ hash });
 
   // Check if current chain is supported
   const supportedChains = [31337, 84532, 8453]; // Anvil, Base Sepolia, Base Mainnet
@@ -50,9 +52,36 @@ export function CreateGameModal({ trigger }: CreateGameModalProps) {
     }
   }, [hash, isConfirming, toast]);
 
-  // Handle success - auto-close modal and refetch games
+  // Handle success - parse event, navigate to settings
   useEffect(() => {
-    if (isSuccess) {
+    if (isSuccess && receipt) {
+      // Extract game ID from GameCreated event
+      let gameId: string | null = null;
+
+      try {
+        // Find the GameCreated event in the logs
+        for (const log of receipt.logs) {
+          try {
+            const decoded = decodeEventLog({
+              abi: MinorityRuleGameAbi,
+              data: log.data,
+              topics: log.topics,
+            });
+
+            if (decoded.eventName === 'GameCreated') {
+              // Extract gameId from event args
+              gameId = (decoded.args as any).gameId?.toString();
+              break;
+            }
+          } catch {
+            // Skip logs that don't match our ABI
+            continue;
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing GameCreated event:', error);
+      }
+
       setTimeout(() => {
         setOpen(false);
         // Reset form state
@@ -61,9 +90,14 @@ export function CreateGameModal({ trigger }: CreateGameModalProps) {
         reset();
         // Refetch games list
         queryClient.invalidateQueries({ queryKey: ['games'] });
+
+        // Navigate to settings if we successfully extracted the game ID
+        if (gameId) {
+          router.push(`/my-games/${gameId}/settings`);
+        }
       }, 2000);
     }
-  }, [isSuccess, queryClient, reset]);
+  }, [isSuccess, receipt, queryClient, reset, router]);
 
   const handleCreateGame = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,11 +183,11 @@ export function CreateGameModal({ trigger }: CreateGameModalProps) {
           <>
             <DialogHeader>
               <DialogTitle>Game created successfully!</DialogTitle>
-              <DialogDescription>Your game has been created on-chain.</DialogDescription>
+              <DialogDescription>Redirecting to game settings...</DialogDescription>
             </DialogHeader>
             <div className="py-4">
               <p className="text-sm text-muted-foreground">
-                Players can now join your game! The modal will close automatically.
+                Taking you to the settings page where you can configure deadlines.
               </p>
             </div>
           </>
