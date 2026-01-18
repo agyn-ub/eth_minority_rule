@@ -8,7 +8,9 @@
     "start": "ponder start",
     "codegen": "ponder codegen",
     "extract-abi": "jq '.abi' ../solidity/out/MinorityRuleGame.sol/MinorityRuleGame.json > abis/MinorityRuleGame.json",
-    "test:transactions": "tsx test-transactions.ts"
+    "test:transactions": "tsx test-transactions.ts",
+    "simulate:multi-round": "tsx simulate-multi-round.ts",
+    "simulate:three-rounds": "tsx simulate-three-rounds.ts"
   },
   "dependencies": {
     "@ponder/core": "^0.7.17",

@@ -485,11 +485,11 @@ contract MinorityRuleGame {
     }
 
     function _updateRemainingPlayers(Game storage game, bool minorityVote) internal {
-        delete game.remainingPlayers;
-
         address[] memory playerList = game.currentRound == 1
             ? game.players
             : game.remainingPlayers;
+
+        delete game.remainingPlayers;
 
         for (uint256 i = 0; i < playerList.length; i++) {
             address player = playerList[i];

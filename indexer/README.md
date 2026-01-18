@@ -100,6 +100,9 @@ npm run codegen
 
 # Extract ABI from Foundry build
 npm run extract-abi
+
+# Run multi-round game simulation (9 players, 2 rounds)
+npm run simulate:multi-round
 ```
 
 ## Events Indexed
@@ -190,9 +193,21 @@ Run `npm run codegen` to generate Ponder types.
 - Ensure contract has emitted events (create a game)
 
 ### Schema mismatch or Ponder errors
+
+**Option 1: Use the reset script (Recommended)**
 ```bash
-# Ponder automatically creates its tables
-# If you get errors, reset the database:
+./reset-database.sh
+```
+
+This script will:
+- Drop all Ponder tables (versioned tables with hash prefixes like `5742__games`)
+- Drop all Ponder views (`games`, `players`, etc.)
+- Drop Ponder metadata (`_ponder_meta`, `ponder_sync` schema)
+- Allow Ponder to recreate everything from scratch
+
+**Option 2: Manual Supabase reset**
+```bash
+# Reset entire Supabase (WARNING: Deletes ALL data including user tables)
 cd ../supabase
 supabase db reset
 
@@ -203,6 +218,18 @@ supabase db push
 cd ../indexer
 npm run dev
 ```
+
+**Option 3: SQL Editor (Supabase Dashboard)**
+See `reset-database.sql` for the SQL commands, or check `README-reset.md` for detailed instructions.
+
+### Understanding Ponder's Table Structure
+
+Ponder 0.7+ creates versioned tables with hash prefixes:
+- **Versioned tables**: `{hash}__tablename` (e.g., `5742__games`, `b2ad__players`)
+- **Reorg tables**: `{hash}_reorg__tablename` (for handling chain reorganizations)
+- **Views**: `tablename` (points to the current version, e.g., `games` → `5742__games`)
+
+When you reset the database, Ponder will create new hash prefixes, but the views will automatically point to the new tables.
 
 ## Architecture
 
@@ -246,6 +273,58 @@ npm run dev
 - Much faster than querying blockchain directly
 - Enables complex queries (filter, sort, search)
 - Vote history available instantly
+
+## Testing & Simulation
+
+### Running the Multi-Round Simulation
+
+The project includes a complete game simulation with 9 players across 2 rounds:
+
+```bash
+npm run simulate:multi-round
+```
+
+This will:
+1. Create a new game with your MetaMask account (0xf39F...2266)
+2. Have 9 players join and pay 0.1 ETH entry fee each
+3. Run Round 1: 4 YES votes, 5 NO votes → 4 survivors
+4. Run Round 2: 2 YES votes, 2 NO votes → 2 winners
+5. Distribute prizes to winners (0.441 ETH each after 2% platform fee)
+
+Check the Ponder logs to see all events being indexed in real-time!
+
+### Resetting for Fresh Testing
+
+When you want to start completely fresh:
+
+```bash
+# 1. Stop Ponder (Ctrl+C)
+
+# 2. Reset database
+./reset-database.sh
+
+# 3. Stop Anvil
+kill <anvil_pid>
+
+# 4. Delete Anvil state
+rm ../.anvil-state.json
+
+# 5. Restart Anvil
+cd ../solidity
+anvil --state ../.anvil-state.json
+
+# 6. Redeploy contract (will get same address due to deterministic deployment)
+forge script script/Deploy.s.sol --rpc-url http://localhost:8545 --broadcast
+
+# 7. Restart Ponder
+cd ../indexer
+npm run dev
+
+# 8. Run simulation
+npm run simulate:multi-round
+```
+
+See `README-reset.md` for detailed reset instructions.
 
 ## Resources
 

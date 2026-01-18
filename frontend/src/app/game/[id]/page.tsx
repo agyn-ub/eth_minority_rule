@@ -379,7 +379,12 @@ export default function GamePage() {
           <div className="space-y-2">
             {players.map((player) => (
               <div key={player.id} className="flex items-center justify-between py-2 border-b">
-                <span className="font-mono text-sm">{formatAddress(player.player_address)}</span>
+                <Link
+                  href={`/player/${player.player_address}`}
+                  className="font-mono text-sm hover:text-primary transition-colors underline decoration-dotted"
+                >
+                  {player.player_address}
+                </Link>
                 <span className="text-sm text-muted-foreground">
                   {formatWei(player.joined_amount)} ETH
                 </span>
@@ -399,7 +404,12 @@ export default function GamePage() {
             <div className="space-y-2">
               {currentRoundVotes.map((vote) => (
                 <div key={vote.id} className="flex items-center justify-between py-2 border-b">
-                  <span className="font-mono text-sm">{formatAddress(vote.player_address)}</span>
+                  <Link
+                    href={`/player/${vote.player_address}`}
+                    className="font-mono text-sm hover:text-primary transition-colors underline decoration-dotted"
+                  >
+                    {vote.player_address}
+                  </Link>
                   <span
                     className={`px-2 py-1 text-xs rounded-full ${
                       vote.vote ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
@@ -449,7 +459,12 @@ export default function GamePage() {
             <div className="space-y-2">
               {winners.map((winner) => (
                 <div key={winner.id} className="flex items-center justify-between py-2 border-b">
-                  <span className="font-mono text-sm">{formatAddress(winner.player_address)}</span>
+                  <Link
+                    href={`/player/${winner.player_address}`}
+                    className="font-mono text-sm hover:text-primary transition-colors underline decoration-dotted"
+                  >
+                    {winner.player_address}
+                  </Link>
                   <span className="text-sm font-semibold text-green-600">
                     {formatWei(winner.prize_amount)} ETH
                   </span>

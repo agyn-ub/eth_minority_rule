@@ -29,6 +29,16 @@ ponder.on("MinorityRuleGame:GameCreated", async ({ event, context }) => {
 ponder.on("MinorityRuleGame:PlayerJoined", async ({ event, context }) => {
   const timestamp = new Date(Number(event.block.timestamp) * 1000).toISOString();
 
+  // Check if game exists
+  const existingGame = await context.db.find(schema.games, { game_id: event.args.gameId });
+
+  if (!existingGame) {
+    console.warn(
+      `⚠️  Skipping PlayerJoined for game ${event.args.gameId} - game not found in database`
+    );
+    return;
+  }
+
   // Insert player record
   await context.db.insert(schema.players).values({
     game_id: event.args.gameId,
@@ -92,6 +102,16 @@ ponder.on("MinorityRuleGame:VoteRevealed", async ({ event, context }) => {
 ponder.on("MinorityRuleGame:CommitPhaseStarted", async ({ event, context }) => {
   const timestamp = new Date(Number(event.block.timestamp) * 1000).toISOString();
 
+  // Check if game exists
+  const existingGame = await context.db.find(schema.games, { game_id: event.args.gameId });
+
+  if (!existingGame) {
+    console.warn(
+      `⚠️  Skipping CommitPhaseStarted for game ${event.args.gameId} - game not found in database`
+    );
+    return;
+  }
+
   await context.db.update(schema.games, { game_id: event.args.gameId }).set({
     state: "CommitPhase",
     current_round: event.args.round,
@@ -107,6 +127,16 @@ ponder.on("MinorityRuleGame:CommitPhaseStarted", async ({ event, context }) => {
 // ============ RevealPhaseStarted Event ============
 ponder.on("MinorityRuleGame:RevealPhaseStarted", async ({ event, context }) => {
   const timestamp = new Date(Number(event.block.timestamp) * 1000).toISOString();
+
+  // Check if game exists
+  const existingGame = await context.db.find(schema.games, { game_id: event.args.gameId });
+
+  if (!existingGame) {
+    console.warn(
+      `⚠️  Skipping RevealPhaseStarted for game ${event.args.gameId} - game not found in database`
+    );
+    return;
+  }
 
   await context.db.update(schema.games, { game_id: event.args.gameId }).set({
     state: "RevealPhase",
@@ -145,6 +175,16 @@ ponder.on("MinorityRuleGame:RoundCompleted", async ({ event, context }) => {
 // ============ GameCompleted Event ============
 ponder.on("MinorityRuleGame:GameCompleted", async ({ event, context }) => {
   const timestamp = new Date(Number(event.block.timestamp) * 1000).toISOString();
+
+  // Check if game exists before updating
+  const existingGame = await context.db.find(schema.games, { game_id: event.args.gameId });
+
+  if (!existingGame) {
+    console.warn(
+      `⚠️  Skipping GameCompleted for game ${event.args.gameId} - game not found in database (likely db/blockchain out of sync)`
+    );
+    return;
+  }
 
   // Update game state
   await context.db.update(schema.games, { game_id: event.args.gameId }).set({
