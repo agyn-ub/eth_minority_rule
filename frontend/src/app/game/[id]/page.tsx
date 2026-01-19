@@ -10,6 +10,7 @@ import { VoteRevealForm } from '@/components/VoteRevealForm';
 import { JoinGameForm } from '@/components/JoinGameForm';
 import { TimerProgress } from '@/components/TimerProgress';
 import { ProcessRoundForm } from '@/components/ProcessRoundForm';
+import { PlayerStatusCard } from '@/components/PlayerStatusCard';
 import { formatWei, formatAddress, getGameStateLabel, getTimeRemaining } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -370,29 +371,15 @@ export default function GamePage() {
         <VoteRevealForm gameId={gameId} currentRound={game.current_round} />
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Players ({players.length})</CardTitle>
-          <CardDescription>All participants in this game</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {players.map((player) => (
-              <div key={player.id} className="flex items-center justify-between py-2 border-b">
-                <Link
-                  href={`/player/${player.player_address}`}
-                  className="font-mono text-sm hover:text-primary transition-colors underline decoration-dotted"
-                >
-                  {player.player_address}
-                </Link>
-                <span className="text-sm text-muted-foreground">
-                  {formatWei(player.joined_amount)} ETH
-                </span>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <PlayerStatusCard
+        gameId={gameId}
+        currentRound={game.current_round}
+        gameState={game.state}
+        players={players}
+        commits={commits}
+        votes={votes}
+        currentUserAddress={address}
+      />
 
       {currentRoundVotes.length > 0 && (
         <Card>

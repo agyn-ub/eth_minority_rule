@@ -33,6 +33,32 @@ export function formatTimestamp(timestamp: number): string {
   return date.toLocaleString();
 }
 
+export function formatRelativeTime(timestamp: string): string {
+  try {
+    const date = new Date(timestamp);
+    if (isNaN(date.getTime())) return 'Unknown';
+
+    const now = Date.now();
+    const diff = now - date.getTime();
+
+    // Handle future dates
+    if (diff < 0) return 'Just now';
+
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `${days}d ago`;
+    if (hours > 0) return `${hours}h ago`;
+    if (minutes > 0) return `${minutes}m ago`;
+    if (seconds > 5) return `${seconds}s ago`;
+    return 'Just now';
+  } catch {
+    return 'Unknown';
+  }
+}
+
 export function getTimeRemaining(deadline: number): string {
   const now = Math.floor(Date.now() / 1000);
   const remaining = deadline - now;
