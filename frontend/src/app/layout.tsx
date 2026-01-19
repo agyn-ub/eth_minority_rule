@@ -5,6 +5,7 @@ import { Providers } from './providers';
 import { Toaster } from '@/components/ui/toaster';
 import { ConnectButton } from '@/components/ConnectButton';
 import { CreateGameModal } from '@/components/CreateGameModal';
+import { NetworkWarningBanner } from '@/components/NetworkWarningBanner';
 import Link from 'next/link';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -23,6 +24,7 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={inter.className}>
         <Providers>
+          <NetworkWarningBanner />
           <div className="min-h-screen flex flex-col">
             {/* Dramatic Header - Liar Game Style */}
             <header className="border-b border-primary/30 bg-card sticky top-0 z-50">
