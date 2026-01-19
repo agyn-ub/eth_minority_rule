@@ -170,6 +170,29 @@ ponder.on("MinorityRuleGame:RoundCompleted", async ({ event, context }) => {
   console.log(
     `✅ Round ${event.args.round} completed for game ${event.args.gameId} | Minority: ${minorityText} | Remaining: ${event.args.votesRemaining}`
   );
+
+  // Check if game exists
+  const existingGame = await context.db.find(schema.games, { game_id: event.args.gameId });
+
+  if (!existingGame) {
+    console.warn(
+      `⚠️  Skipping game update in RoundCompleted for game ${event.args.gameId} - game not found`
+    );
+    return;
+  }
+
+  // Update game state: reset to ZeroPhase, clear deadlines, increment round
+  await context.db.update(schema.games, { game_id: event.args.gameId }).set({
+    state: "ZeroPhase",
+    commit_deadline: undefined,
+    reveal_deadline: undefined,
+    current_round: event.args.round + 1,
+    updated_at: timestamp,
+  });
+
+  console.log(
+    `✅ Game ${event.args.gameId} state updated to ZeroPhase for round ${event.args.round + 1}`
+  );
 });
 
 // ============ GameCompleted Event ============
