@@ -32,7 +32,6 @@ export function InlineDeadlineForm({ game }: InlineDeadlineFormProps) {
   const canSetRevealDeadline =
     game.state === 'CommitPhase' &&
     game.commit_deadline &&
-    !game.reveal_deadline &&
     Date.now() > Number(game.commit_deadline) * 1000;
 
   // Reset success state after 2 seconds
