@@ -28,7 +28,7 @@ export function InlineDeadlineForm({ game }: InlineDeadlineFormProps) {
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   // Determine which form to show
-  const canSetCommitDeadline = game.state === 'ZeroPhase' && !game.commit_deadline;
+  const canSetCommitDeadline = game.state === 'ZeroPhase';
   const canSetRevealDeadline =
     game.state === 'CommitPhase' &&
     game.commit_deadline &&
