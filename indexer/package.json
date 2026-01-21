@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "ponder dev",
+    "dev:fresh": "npm run reset && ponder dev",
     "start": "ponder start",
     "codegen": "ponder codegen",
+    "reset": "bash scripts/reset-ponder.sh",
     "extract-abi": "jq '.abi' ../solidity/out/MinorityRuleGame.sol/MinorityRuleGame.json > abis/MinorityRuleGame.json",
     "test:transactions": "tsx test-transactions.ts",
     "simulate:multi-round": "tsx simulate-multi-round.ts",

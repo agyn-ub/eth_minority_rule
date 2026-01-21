@@ -84,6 +84,13 @@ export interface Winner {
   transaction_hash: string;
 }
 
+export interface Elimination {
+  game_id: string;               // bigint as string
+  player_address: string;
+  eliminated: boolean;
+  eliminated_round: number | null;
+}
+
 export interface PlayerSearchResult {
   player_address: string;
   game_count: number;
@@ -216,6 +223,40 @@ export const getGameRounds = async (gameId: number | string): Promise<Round[]> =
     return [];
   }
   return data || [];
+};
+
+export const getGameEliminations = async (
+  gameId: number | string
+): Promise<Elimination[]> => {
+  const { data, error } = await supabase
+    .from('eliminations')
+    .select('*')
+    .eq('game_id', gameId.toString())
+    .order('player_address', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching eliminations:', error);
+    return [];
+  }
+  return data || [];
+};
+
+export const getPlayerElimination = async (
+  gameId: number | string,
+  playerAddress: string
+): Promise<Elimination | null> => {
+  const { data, error } = await supabase
+    .from('eliminations')
+    .select('*')
+    .eq('game_id', gameId.toString())
+    .eq('player_address', playerAddress.toLowerCase())
+    .single();
+
+  if (error) {
+    console.error('Error fetching player elimination:', error);
+    return null;
+  }
+  return data;
 };
 
 export const getGameWinners = async (gameId: number | string): Promise<Winner[]> => {

@@ -45,8 +45,7 @@ export function VoteCommitForm({ gameId, currentRound }: VoteCommitFormProps) {
       }
       invalidateGame(gameId);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSuccess, gameId, currentRound, address]);
+  }, [isSuccess, gameId, currentRound, address, invalidateGame]);
 
   const handleSubmitCommit = async () => {
     if (selectedVote === null || !chainId) {

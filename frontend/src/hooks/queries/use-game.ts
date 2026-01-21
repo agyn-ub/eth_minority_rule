@@ -49,8 +49,14 @@ export function useGame(gameId: number | string | undefined, options?: {
 export function useGameDetail(gameId: number | string | undefined) {
   const gameQuery = useGame(gameId);
   const playersQuery = useGamePlayers(gameId);
-  const votesQuery = useGameVotes(gameId);
-  const commitsQuery = useGameCommits(gameId);
+  const votesQuery = useGameVotes(gameId, undefined, {
+    gameState: gameQuery.data?.state,
+    currentRound: gameQuery.data?.current_round,
+  });
+  const commitsQuery = useGameCommits(gameId, undefined, {
+    gameState: gameQuery.data?.state,
+    currentRound: gameQuery.data?.current_round,
+  });
   const roundsQuery = useGameRounds(gameId);
   const winnersQuery = useGameWinners(gameId);
 

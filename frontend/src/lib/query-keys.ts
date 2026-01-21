@@ -37,6 +37,7 @@ export const queryKeys = {
         : ['games', 'detail', String(gameId), 'commits'] as const,
     rounds: (gameId: number | string) => ['games', 'detail', String(gameId), 'rounds'] as const,
     winners: (gameId: number | string) => ['games', 'detail', String(gameId), 'winners'] as const,
+    eliminations: (gameId: number | string) => ['games', 'detail', String(gameId), 'eliminations'] as const,
   },
   // Player-related keys
   players: {

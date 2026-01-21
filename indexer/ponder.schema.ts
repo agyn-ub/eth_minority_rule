@@ -77,3 +77,12 @@ export const winners = onchainTable("winners", (p) => ({
 }), (table) => ({
   pk: primaryKey({ columns: [table.game_id, table.player_address] })
 }));
+
+export const eliminations = onchainTable("eliminations", (p) => ({
+  game_id: p.bigint().notNull(),
+  player_address: p.text().notNull(),
+  eliminated: p.boolean().notNull(),
+  eliminated_round: p.integer(), // null until eliminated
+}), (table) => ({
+  pk: primaryKey({ columns: [table.game_id, table.player_address] })
+}));

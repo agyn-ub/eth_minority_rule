@@ -1,4 +1,5 @@
 import { ponder } from "@/generated";
+import { and, eq } from "@ponder/core";
 import * as schema from "../ponder.schema";
 
 // ============ GameCreated Event ============
@@ -55,6 +56,14 @@ ponder.on("MinorityRuleGame:PlayerJoined", async ({ event, context }) => {
     prize_pool: (BigInt(row.prize_pool) + event.args.amount).toString(),
     updated_at: timestamp,
   }));
+
+  // Insert elimination record with eliminated=false
+  await context.db.insert(schema.eliminations).values({
+    game_id: event.args.gameId,
+    player_address: event.args.player.toLowerCase(),
+    eliminated: false,
+    eliminated_round: undefined,
+  });
 
   console.log(`✅ Player ${event.args.player} joined game ${event.args.gameId}`);
 });
@@ -170,6 +179,46 @@ ponder.on("MinorityRuleGame:RoundCompleted", async ({ event, context }) => {
   console.log(
     `✅ Round ${event.args.round} completed for game ${event.args.gameId} | Minority: ${minorityText} | Remaining: ${event.args.votesRemaining}`
   );
+
+  // Track eliminations: players who voted with the majority are eliminated
+  // Fetch all votes for this round to determine who was eliminated
+  const votes = await context.db.sql
+    .select()
+    .from(schema.votes)
+    .where(
+      and(
+        eq(schema.votes.game_id, event.args.gameId),
+        eq(schema.votes.round, event.args.round)
+      )
+    );
+
+  // Determine who got eliminated (players who voted with MAJORITY)
+  // In Minority Rule: minorities survive, majorities are eliminated
+  const minorityVote = event.args.minorityVote;
+
+  // Get list of eliminated player addresses (majority voters)
+  const eliminatedPlayers = votes
+    .filter(vote => vote.vote !== minorityVote)
+    .map(vote => vote.player_address);
+
+  // Update eliminations for each eliminated player
+  if (eliminatedPlayers.length > 0) {
+    for (const playerAddress of eliminatedPlayers) {
+      await context.db
+        .update(schema.eliminations, {
+          game_id: event.args.gameId,
+          player_address: playerAddress,
+        })
+        .set({
+          eliminated: true,
+          eliminated_round: event.args.round,
+        });
+    }
+
+    console.log(
+      `✅ Marked ${eliminatedPlayers.length} player(s) as eliminated in round ${event.args.round}`
+    );
+  }
 
   // Check if game exists
   const existingGame = await context.db.find(schema.games, { game_id: event.args.gameId });

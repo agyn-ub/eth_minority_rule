@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-keys';
 
@@ -8,12 +9,8 @@ import { queryKeys } from '@/lib/query-keys';
 export function useGameMutations() {
   const queryClient = useQueryClient();
 
-  return {
-    /**
-     * Invalidate all game-related data for a specific game
-     * Call after: joining game, committing vote, revealing vote
-     */
-    invalidateGame: async (gameId: number | string) => {
+  const invalidateGame = useCallback(
+    async (gameId: number | string) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.games.detail(gameId) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.games.players(gameId) }),
@@ -23,27 +20,40 @@ export function useGameMutations() {
         queryClient.invalidateQueries({ queryKey: queryKeys.games.winners(gameId) }),
       ]);
     },
+    [queryClient]
+  );
+
+  const invalidateGameLists = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.games.active }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.games.completed }),
+    ]);
+  }, [queryClient]);
+
+  const optimisticUpdateGame = useCallback(
+    <TData,>(gameId: number | string, updater: (oldData: TData | undefined) => TData) => {
+      queryClient.setQueryData(queryKeys.games.detail(gameId), updater);
+    },
+    [queryClient]
+  );
+
+  return {
+    /**
+     * Invalidate all game-related data for a specific game
+     * Call after: joining game, committing vote, revealing vote
+     */
+    invalidateGame,
 
     /**
      * Invalidate game lists (active/completed)
      * Call after: creating game, game state changes
      */
-    invalidateGameLists: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.games.active }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.games.completed }),
-      ]);
-    },
+    invalidateGameLists,
 
     /**
      * Optimistic update for game state
      * Updates cache immediately before server confirms
      */
-    optimisticUpdateGame: <TData>(
-      gameId: number | string,
-      updater: (oldData: TData | undefined) => TData
-    ) => {
-      queryClient.setQueryData(queryKeys.games.detail(gameId), updater);
-    },
+    optimisticUpdateGame,
   };
 }
