@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlayerGameCard } from '@/components/PlayerGameCard';
 import { usePlayerStats } from '@/hooks/queries/use-player-stats';
+import { useBatchPlayerGameDetails } from '@/hooks/queries/use-batch-player-game-details';
 import { formatAddress, formatWei } from '@/lib/utils';
 
 export default function PlayerStatsPage() {
@@ -14,7 +15,18 @@ export default function PlayerStatsPage() {
   const router = useRouter();
   const address = params.address as string;
 
-  const { data: stats, isLoading } = usePlayerStats(address);
+  const { data: stats, isLoading: statsLoading } = usePlayerStats(address);
+
+  // Extract game IDs
+  const gameIds = stats?.games_participated.map(g => g.game_id) || [];
+
+  // Batch fetch all game details at once
+  const { data: gameDetails, isLoading: detailsLoading } = useBatchPlayerGameDetails(
+    address,
+    gameIds
+  );
+
+  const isLoading = statsLoading || detailsLoading;
 
   if (isLoading) {
     return (
@@ -112,7 +124,7 @@ export default function PlayerStatsPage() {
           </h2>
         </div>
 
-        {stats.games_participated.length === 0 ? (
+        {!gameDetails || gameDetails.length === 0 ? (
           <Card>
             <CardContent className="pt-6 text-center">
               <p className="text-muted-foreground">No games found</p>
@@ -120,11 +132,10 @@ export default function PlayerStatsPage() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {stats.games_participated.map((game) => (
+            {gameDetails.map((detail) => (
               <PlayerGameCard
-                key={game.game_id}
-                playerAddress={stats.player_address}
-                gameId={game.game_id}
+                key={detail.game_id}
+                gameDetail={detail}
               />
             ))}
           </div>

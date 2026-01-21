@@ -13,7 +13,7 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       // Cache duration - data considered fresh for this long
-      staleTime: 1000, // 1 second (very low for real-time data)
+      staleTime: 30_000, // 30 seconds (individual hooks override for real-time data)
 
       // Cache persistence - data kept in memory for this long
       gcTime: 5 * 60 * 1000, // 5 minutes

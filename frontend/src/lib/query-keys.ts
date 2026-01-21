@@ -18,6 +18,7 @@
  *   - players.stats(address) -> player stats overview
  *   - players.votes(address) -> all player votes
  *   - players.gameDetail(address, gameId) -> player's game detail
+ *   - players.batchGameDetails(address, gameIds) -> batch game details for player
  */
 export const queryKeys = {
   // Game-related keys
@@ -47,5 +48,7 @@ export const queryKeys = {
     votes: (address: string) => ['players', 'votes', address.toLowerCase()] as const,
     gameDetail: (address: string, gameId: number | string) =>
       ['players', 'detail', address.toLowerCase(), 'game', String(gameId)] as const,
+    batchGameDetails: (address: string, gameIds: string[]) =>
+      ['players', 'batch-details', address.toLowerCase(), ...gameIds.sort()] as const,
   },
 } as const;

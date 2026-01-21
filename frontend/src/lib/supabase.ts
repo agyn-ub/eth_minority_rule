@@ -114,6 +114,16 @@ export interface PlayerGameDetail {
   prize_amount?: string;
 }
 
+export interface BatchPlayerGameDetail {
+  game_id: string;
+  game: Game;
+  player_info: Player;
+  votes: Vote[];
+  rounds: Round[];
+  is_winner: boolean;
+  prize_amount?: string;
+}
+
 // Query functions
 
 export const getGame = async (gameId: number | string): Promise<Game | null> => {
@@ -457,4 +467,67 @@ export const getPlayerGameDetail = async (
     is_winner: !!winnerInfo,
     prize_amount: winnerInfo?.prize_amount,
   };
+};
+
+export const getBatchPlayerGameDetails = async (
+  playerAddress: string,
+  gameIds: string[]
+): Promise<BatchPlayerGameDetail[]> => {
+  if (gameIds.length === 0) {
+    return [];
+  }
+
+  const normalizedAddress = playerAddress.toLowerCase();
+
+  // 5 parallel queries (not 5 per game!)
+  const [games, playerInfos, playerVotes, allRounds, winners] = await Promise.all([
+    // 1. Games metadata
+    supabase.from('games').select('*').in('game_id', gameIds),
+
+    // 2. Only THIS player's entries (not all players!)
+    supabase.from('players').select('*')
+      .eq('player_address', normalizedAddress)
+      .in('game_id', gameIds),
+
+    // 3. Only THIS player's votes (not all votes!)
+    supabase.from('votes').select('*')
+      .eq('player_address', normalizedAddress)
+      .in('game_id', gameIds)
+      .order('round', { ascending: true }),
+
+    // 4. Rounds (small dataset, needed for context)
+    supabase.from('rounds').select('*')
+      .in('game_id', gameIds)
+      .order('round', { ascending: true }),
+
+    // 5. Only THIS player's wins
+    supabase.from('winners').select('*')
+      .eq('player_address', normalizedAddress)
+      .in('game_id', gameIds)
+  ]);
+
+  // Transform into array with error handling
+  const gamesData = games.data || [];
+  const playersData = playerInfos.data || [];
+  const votesData = playerVotes.data || [];
+  const roundsData = allRounds.data || [];
+  const winnersData = winners.data || [];
+
+  return gameIds.map(gameId => {
+    const game = gamesData.find(g => g.game_id === gameId);
+    const playerInfo = playersData.find(p => p.game_id === gameId);
+    const votes = votesData.filter(v => v.game_id === gameId);
+    const rounds = roundsData.filter(r => r.game_id === gameId);
+    const winnerInfo = winnersData.find(w => w.game_id === gameId);
+
+    return {
+      game_id: gameId,
+      game: game!,
+      player_info: playerInfo!,
+      votes,
+      rounds,
+      is_winner: !!winnerInfo,
+      prize_amount: winnerInfo?.prize_amount,
+    };
+  }).filter(d => d.game && d.player_info);
 };

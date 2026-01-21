@@ -28,21 +28,9 @@ if ! curl -s -X POST --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params
 fi
 echo -e "${GREEN}✓ Anvil is running${NC}\n"
 
-# Get or deploy contract
-if [ -z "$GAME_ADDRESS" ]; then
-    echo -e "${YELLOW}Deploying new contract...${NC}"
-    # Compile first
-    forge build > /dev/null 2>&1
-    # Get bytecode and encode constructor args
-    BYTECODE=$(forge inspect src/MinorityRuleGame.sol:MinorityRuleGame bytecode)
-    CONSTRUCTOR_ARGS=$(cast abi-encode "constructor(address)" $ACCOUNT_0)
-    # Deploy using cast send with properly encoded constructor
-    OUTPUT=$(cast send --private-key $PK_0 --rpc-url http://localhost:8545 --json --create "${BYTECODE}${CONSTRUCTOR_ARGS:2}")
-    GAME_ADDRESS=$(echo "$OUTPUT" | jq -r '.contractAddress')
-    echo -e "${GREEN}Contract deployed at: $GAME_ADDRESS${NC}\n"
-else
-    echo -e "${GREEN}Using existing contract: $GAME_ADDRESS${NC}\n"
-fi
+# Use existing contract address (deployed via reset-all.sh)
+GAME_ADDRESS="0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
+echo -e "${GREEN}Using contract: $GAME_ADDRESS${NC}\n"
 
 echo -e "${BLUE}=== STEP 1: Creating Game (Account 0) ===${NC}"
 GAME_ID=$(cast call $GAME_ADDRESS "nextGameId()(uint256)" --rpc-url http://localhost:8545)
@@ -88,47 +76,48 @@ cast send $GAME_ADDRESS "joinGame(uint256)" $GAME_ID --value $ENTRY_FEE \
     --private-key $PK_0 --rpc-url http://localhost:8545 > /dev/null
 echo -e "${GREEN}✓ Account 0 joined${NC}"
 
-# Generate commit hashes (vote + salt)
+# Generate commit hashes using abi.encodePacked (bool + bytes32)
+# For bool: true=0x01, false=0x00 (1 byte)
 # YES voters: 0, 1, 2
 SALT_0="0x0000000000000000000000000000000000000000000000000000000000003039"
-COMMIT_0=$(cast keccak $(cast abi-encode "f(bool,bytes32)" true $SALT_0))
+COMMIT_0=$(cast keccak "0x01${SALT_0:2}")  # true (0x01) + salt
 cast send $GAME_ADDRESS "submitCommit(uint256,bytes32)" $GAME_ID $COMMIT_0 \
     --private-key $PK_0 --rpc-url http://localhost:8545 > /dev/null
 echo -e "${GREEN}✓ Account 0 committed (YES)${NC}"
 
 SALT_1="0x0000000000000000000000000000000000000000000000000000000000005ba0"
-COMMIT_1=$(cast keccak $(cast abi-encode "f(bool,bytes32)" true $SALT_1))
+COMMIT_1=$(cast keccak "0x01${SALT_1:2}")  # true (0x01) + salt
 cast send $GAME_ADDRESS "submitCommit(uint256,bytes32)" $GAME_ID $COMMIT_1 \
     --private-key 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d --rpc-url http://localhost:8545 > /dev/null
 echo -e "${GREEN}✓ Account 1 committed (YES)${NC}"
 
 SALT_2="0x0000000000000000000000000000000000000000000000000000000000008707"
-COMMIT_2=$(cast keccak $(cast abi-encode "f(bool,bytes32)" true $SALT_2))
+COMMIT_2=$(cast keccak "0x01${SALT_2:2}")  # true (0x01) + salt
 cast send $GAME_ADDRESS "submitCommit(uint256,bytes32)" $GAME_ID $COMMIT_2 \
     --private-key 0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a --rpc-url http://localhost:8545 > /dev/null
 echo -e "${GREEN}✓ Account 2 committed (YES)${NC}"
 
 # NO voters: 3, 4, 5, 6
 SALT_3="0x000000000000000000000000000000000000000000000000000000000000b26e"
-COMMIT_3=$(cast keccak $(cast abi-encode "f(bool,bytes32)" false $SALT_3))
+COMMIT_3=$(cast keccak "0x00${SALT_3:2}")  # false (0x00) + salt
 cast send $GAME_ADDRESS "submitCommit(uint256,bytes32)" $GAME_ID $COMMIT_3 \
     --private-key 0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6 --rpc-url http://localhost:8545 > /dev/null
 echo -e "${GREEN}✓ Account 3 committed (NO)${NC}"
 
 SALT_4="0x000000000000000000000000000000000000000000000000000000000000ddd5"
-COMMIT_4=$(cast keccak $(cast abi-encode "f(bool,bytes32)" false $SALT_4))
+COMMIT_4=$(cast keccak "0x00${SALT_4:2}")  # false (0x00) + salt
 cast send $GAME_ADDRESS "submitCommit(uint256,bytes32)" $GAME_ID $COMMIT_4 \
     --private-key 0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a --rpc-url http://localhost:8545 > /dev/null
 echo -e "${GREEN}✓ Account 4 committed (NO)${NC}"
 
 SALT_5="0x000000000000000000000000000000000000000000000000000000000001093a"
-COMMIT_5=$(cast keccak $(cast abi-encode "f(bool,bytes32)" false $SALT_5))
+COMMIT_5=$(cast keccak "0x00${SALT_5:2}")  # false (0x00) + salt
 cast send $GAME_ADDRESS "submitCommit(uint256,bytes32)" $GAME_ID $COMMIT_5 \
     --private-key 0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba --rpc-url http://localhost:8545 > /dev/null
 echo -e "${GREEN}✓ Account 5 committed (NO)${NC}"
 
 SALT_6="0x00000000000000000000000000000000000000000000000000000000000134a5"
-COMMIT_6=$(cast keccak $(cast abi-encode "f(bool,bytes32)" false $SALT_6))
+COMMIT_6=$(cast keccak "0x00${SALT_6:2}")  # false (0x00) + salt
 cast send $GAME_ADDRESS "submitCommit(uint256,bytes32)" $GAME_ID $COMMIT_6 \
     --private-key 0x92db14e403b83dfe3df233f83dfa3a0d7096f21ca9b0d6d6b8d88b2b4ec1564e --rpc-url http://localhost:8545 > /dev/null
 echo -e "${GREEN}✓ Account 6 committed (NO)${NC}\n"

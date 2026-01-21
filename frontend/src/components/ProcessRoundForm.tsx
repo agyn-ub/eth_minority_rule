@@ -29,8 +29,7 @@ export function ProcessRoundForm({ gameId }: ProcessRoundFormProps) {
         description: 'The round has been completed. Check the results below.',
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSuccess, gameId]);
+  }, [isSuccess, gameId, invalidateGame, toast]);
 
   const handleProcessRound = async () => {
     if (!chainId) {

@@ -41,8 +41,7 @@ export function VoteRevealForm({ gameId, currentRound }: VoteRevealFormProps) {
     if (isSuccess) {
       invalidateGame(gameId);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSuccess, gameId]);
+  }, [isSuccess, gameId, invalidateGame]);
 
   useEffect(() => {
     if (!address) return;

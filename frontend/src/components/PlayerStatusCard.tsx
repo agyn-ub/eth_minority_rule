@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatAddress, formatRelativeTime } from '@/lib/utils';
+import { formatAddress } from '@/lib/utils';
 import type { Player, Commit, Vote } from '@/lib/supabase';
 
 interface PlayerStatusCardProps {
@@ -20,8 +20,6 @@ interface PlayerStatus {
   address: string;
   hasCommitted: boolean;
   hasRevealed: boolean;
-  committedAt?: string;
-  revealedAt?: string;
   isCurrentUser: boolean;
 }
 
@@ -55,40 +53,16 @@ function PlayerStatusRow({ status, showCommit, showReveal }: {
   const getStatusDisplay = () => {
     if (showReveal) {
       if (status.hasRevealed) {
-        return (
-          <div className="flex items-center gap-2">
-            <span className="text-success text-lg">✅</span>
-            <span className="text-xs text-muted-foreground">
-              {status.revealedAt && formatRelativeTime(status.revealedAt)}
-            </span>
-          </div>
-        );
+        return <span className="text-success text-lg">✅</span>;
       }
-      return (
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground text-lg">⏳</span>
-          <span className="text-xs text-muted-foreground">Waiting</span>
-        </div>
-      );
+      return <span className="text-muted-foreground text-lg">⏳</span>;
     }
 
     if (showCommit) {
       if (status.hasCommitted) {
-        return (
-          <div className="flex items-center gap-2">
-            <span className="text-success text-lg">✅</span>
-            <span className="text-xs text-muted-foreground">
-              {status.committedAt && formatRelativeTime(status.committedAt)}
-            </span>
-          </div>
-        );
+        return <span className="text-success text-lg">✅</span>;
       }
-      return (
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground text-lg">⏳</span>
-          <span className="text-xs text-muted-foreground">Waiting</span>
-        </div>
-      );
+      return <span className="text-muted-foreground text-lg">⏳</span>;
     }
 
     return null;
@@ -147,8 +121,6 @@ export function PlayerStatusCard({
         address: player.player_address,
         hasCommitted: !!commit,
         hasRevealed: !!vote,
-        committedAt: commit?.committed_at,
-        revealedAt: vote?.revealed_at,
         isCurrentUser: currentUserAddress
           ? normalizedAddress === currentUserAddress.toLowerCase()
           : false,

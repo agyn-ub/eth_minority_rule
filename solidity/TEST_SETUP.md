@@ -17,8 +17,7 @@ anvil --state .anvil-state.json --state-interval 10
 ### 2. Run the test setup script
 
 ```bash
-cd solidity
-./script/run-test-setup.sh
+cd solidity ./script/run-test-setup.sh
 ```
 
 Or manually with forge:

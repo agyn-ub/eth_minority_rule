@@ -91,20 +91,36 @@ ponder.on("MinorityRuleGame:VoteCommitted", async ({ event, context }) => {
 ponder.on("MinorityRuleGame:VoteRevealed", async ({ event, context }) => {
   const timestamp = new Date(Number(event.block.timestamp) * 1000).toISOString();
 
-  await context.db.insert(schema.votes).values({
-    game_id: event.args.gameId,
-    round: event.args.round,
-    player_address: event.args.player.toLowerCase(),
-    vote: event.args.vote,
-    revealed_at: timestamp,
-    block_number: event.block.number,
-    transaction_hash: event.transaction.hash,
-  });
+  try {
+    await context.db.insert(schema.votes).values({
+      game_id: event.args.gameId,
+      round: event.args.round,
+      player_address: event.args.player.toLowerCase(),
+      vote: event.args.vote,
+      revealed_at: timestamp,
+      block_number: event.block.number,
+      transaction_hash: event.transaction.hash,
+    });
 
-  const voteText = event.args.vote ? "YES" : "NO";
-  console.log(
-    `✅ Vote revealed by ${event.args.player}: ${voteText} (game ${event.args.gameId} round ${event.args.round})`
-  );
+    const voteText = event.args.vote ? "YES" : "NO";
+    console.log(
+      `✅ Vote revealed by ${event.args.player}: ${voteText} (game ${event.args.gameId} round ${event.args.round})`
+    );
+  } catch (error) {
+    console.error(
+      `❌ ERROR inserting vote for game ${event.args.gameId} round ${event.args.round}:`,
+      error
+    );
+    console.error("Event args:", {
+      gameId: event.args.gameId,
+      round: event.args.round,
+      player: event.args.player,
+      vote: event.args.vote,
+      timestamp,
+      block: event.block.number,
+      tx: event.transaction.hash,
+    });
+  }
 });
 
 // ============ CommitPhaseStarted Event ============

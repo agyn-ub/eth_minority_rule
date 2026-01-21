@@ -3,13 +3,11 @@
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { usePlayerGameDetail } from '@/hooks/queries/use-player-game-details';
 import { formatWei, getGameStateLabel } from '@/lib/utils';
-import { Vote, Round } from '@/lib/supabase';
+import { Round, BatchPlayerGameDetail } from '@/lib/supabase';
 
 interface PlayerGameCardProps {
-  playerAddress: string;
-  gameId: string;
+  gameDetail: BatchPlayerGameDetail;
 }
 
 interface RoundVoteDisplay {
@@ -19,23 +17,7 @@ interface RoundVoteDisplay {
   roundStats: Round | null;
 }
 
-export function PlayerGameCard({ playerAddress, gameId }: PlayerGameCardProps) {
-  const { data: gameDetail, isLoading } = usePlayerGameDetail(playerAddress, gameId);
-
-  if (isLoading) {
-    return (
-      <Card className="border-primary/30">
-        <CardContent className="pt-6">
-          <p className="text-center text-muted-foreground">Loading game details...</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!gameDetail) {
-    return null;
-  }
-
+export function PlayerGameCard({ gameDetail }: PlayerGameCardProps) {
   const { game, player_info, votes, rounds, is_winner, prize_amount } = gameDetail;
 
   // Build round-by-round vote display with survival status
