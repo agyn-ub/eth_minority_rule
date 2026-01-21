@@ -17,15 +17,15 @@ interface JoinGameFormProps {
 export function JoinGameForm({ gameId, entryFee }: JoinGameFormProps) {
   const { address, chainId } = useAccount();
   const { toast } = useToast();
-  const { invalidateGame } = useGameMutations();
+  const { invalidateAfterJoin } = useGameMutations();
 
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
-  // Invalidate cache when transaction confirms
+  // Invalidate cache when transaction confirms (only detail + players)
   useEffect(() => {
     if (isSuccess) {
-      invalidateGame(gameId);
+      invalidateAfterJoin(gameId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSuccess, gameId]);

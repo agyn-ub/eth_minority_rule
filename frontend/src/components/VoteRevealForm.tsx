@@ -27,7 +27,7 @@ interface StoredVote {
 export function VoteRevealForm({ gameId, currentRound }: VoteRevealFormProps) {
   const { address, chainId } = useAccount();
   const { toast } = useToast();
-  const { invalidateGame } = useGameMutations();
+  const { invalidateAfterReveal } = useGameMutations();
   const [storedVote, setStoredVote] = useState<StoredVote | null>(null);
   const [manualVote, setManualVote] = useState<boolean | null>(null);
   const [manualSalt, setManualSalt] = useState<string>('');
@@ -36,12 +36,12 @@ export function VoteRevealForm({ gameId, currentRound }: VoteRevealFormProps) {
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
-  // Invalidate cache when transaction confirms
+  // Invalidate cache when transaction confirms (only detail + votes)
   useEffect(() => {
     if (isSuccess) {
-      invalidateGame(gameId);
+      invalidateAfterReveal(gameId);
     }
-  }, [isSuccess, gameId, invalidateGame]);
+  }, [isSuccess, gameId, invalidateAfterReveal]);
 
   useEffect(() => {
     if (!address) return;

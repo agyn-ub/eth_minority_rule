@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,7 +29,7 @@ function getStateBgColor(state: string): string {
 }
 
 
-export function GameCard({ game }: GameCardProps) {
+export const GameCard = memo(function GameCard({ game }: GameCardProps) {
   const stateBgColor = getStateBgColor(game.state);
   const stateLabel = getGameStateLabel(game.state);
 
@@ -137,4 +138,4 @@ export function GameCard({ game }: GameCardProps) {
       </Link>
     </Card>
   );
-}
+});

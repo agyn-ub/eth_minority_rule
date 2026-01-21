@@ -28,14 +28,14 @@ interface VoteCommitFormProps {
 export function VoteCommitForm({ gameId, currentRound }: VoteCommitFormProps) {
   const { address, chainId } = useAccount();
   const { toast } = useToast();
-  const { invalidateGame } = useGameMutations();
+  const { invalidateAfterCommit } = useGameMutations();
   const [selectedVote, setSelectedVote] = useState<boolean | null>(null);
   const [committedVoteData, setCommittedVoteData] = useState<VoteData | null>(null);
 
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
-  // Load committed vote data and invalidate cache when transaction confirms
+  // Load committed vote data and invalidate cache when transaction confirms (only detail + commits)
   useEffect(() => {
     if (isSuccess && address) {
       const storageKey = `vote_salt_${gameId}_${currentRound}_${address}`;
@@ -43,9 +43,9 @@ export function VoteCommitForm({ gameId, currentRound }: VoteCommitFormProps) {
       if (data) {
         setCommittedVoteData(JSON.parse(data));
       }
-      invalidateGame(gameId);
+      invalidateAfterCommit(gameId);
     }
-  }, [isSuccess, gameId, currentRound, address, invalidateGame]);
+  }, [isSuccess, gameId, currentRound, address, invalidateAfterCommit]);
 
   const handleSubmitCommit = async () => {
     if (selectedVote === null || !chainId) {

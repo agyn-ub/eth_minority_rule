@@ -12,6 +12,8 @@
  *     - games.commits(id, round?) -> game commits
  *     - games.rounds(id) -> round history
  *     - games.winners(id) -> game winners
+ *     - games.currentRoundData(id, round) -> current round data (players, commits, votes)
+ *     - games.history(id) -> game history (rounds, winners)
  * - players
  *   - players.all -> all players
  *   - players.search(query) -> player search results
@@ -39,6 +41,9 @@ export const queryKeys = {
     rounds: (gameId: number | string) => ['games', 'detail', String(gameId), 'rounds'] as const,
     winners: (gameId: number | string) => ['games', 'detail', String(gameId), 'winners'] as const,
     eliminations: (gameId: number | string) => ['games', 'detail', String(gameId), 'eliminations'] as const,
+    currentRoundData: (gameId: number | string, round: number) =>
+      ['games', 'detail', String(gameId), 'currentRoundData', round] as const,
+    history: (gameId: number | string) => ['games', 'detail', String(gameId), 'history'] as const,
   },
   // Player-related keys
   players: {

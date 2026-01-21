@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,7 +18,7 @@ interface RoundVoteDisplay {
   roundStats: Round | null;
 }
 
-export function PlayerGameCard({ gameDetail }: PlayerGameCardProps) {
+export const PlayerGameCard = memo(function PlayerGameCard({ gameDetail }: PlayerGameCardProps) {
   const { game, player_info, votes, rounds, is_winner, prize_amount } = gameDetail;
 
   // Build round-by-round vote display with survival status
@@ -165,4 +166,4 @@ export function PlayerGameCard({ gameDetail }: PlayerGameCardProps) {
       </CardContent>
     </Card>
   );
-}
+});

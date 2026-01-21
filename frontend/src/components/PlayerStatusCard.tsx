@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatAddress } from '@/lib/utils';
@@ -45,7 +45,7 @@ function ProgressBar({ current, total, label }: { current: number; total: number
   );
 }
 
-function PlayerStatusRow({ status, showCommit, showReveal }: {
+const PlayerStatusRow = memo(function PlayerStatusRow({ status, showCommit, showReveal }: {
   status: PlayerStatus;
   showCommit: boolean;
   showReveal: boolean;
@@ -92,7 +92,7 @@ function PlayerStatusRow({ status, showCommit, showReveal }: {
       {getStatusDisplay()}
     </div>
   );
-}
+});
 
 export function PlayerStatusCard({
   gameId,
@@ -104,26 +104,32 @@ export function PlayerStatusCard({
   currentUserAddress,
 }: PlayerStatusCardProps) {
   // Merge player data with commit/reveal status
+  // Optimized: O(n) instead of O(n²) by using Map lookups instead of .find()
   const playerStatuses = useMemo(() => {
+    // Pre-filter and build lookup maps (O(n) operations)
     const currentRoundCommits = commits.filter((c) => c.round === currentRound);
     const currentRoundVotes = votes.filter((v) => v.round === currentRound);
 
+    // Build Map with normalized addresses for O(1) lookups
+    const commitMap = new Map(
+      currentRoundCommits.map(c => [c.player_address.toLowerCase(), true])
+    );
+    const voteMap = new Map(
+      currentRoundVotes.map(v => [v.player_address.toLowerCase(), true])
+    );
+
+    // Normalize current user address once
+    const normalizedCurrentUser = currentUserAddress?.toLowerCase();
+
+    // Map through players with O(1) lookups
     const statuses: PlayerStatus[] = players.map((player) => {
       const normalizedAddress = player.player_address.toLowerCase();
-      const commit = currentRoundCommits.find(
-        (c) => c.player_address.toLowerCase() === normalizedAddress
-      );
-      const vote = currentRoundVotes.find(
-        (v) => v.player_address.toLowerCase() === normalizedAddress
-      );
 
       return {
         address: player.player_address,
-        hasCommitted: !!commit,
-        hasRevealed: !!vote,
-        isCurrentUser: currentUserAddress
-          ? normalizedAddress === currentUserAddress.toLowerCase()
-          : false,
+        hasCommitted: commitMap.has(normalizedAddress),
+        hasRevealed: voteMap.has(normalizedAddress),
+        isCurrentUser: normalizedCurrentUser === normalizedAddress,
       };
     });
 

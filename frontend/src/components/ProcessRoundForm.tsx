@@ -15,21 +15,21 @@ interface ProcessRoundFormProps {
 export function ProcessRoundForm({ gameId }: ProcessRoundFormProps) {
   const { chainId } = useAccount();
   const { toast } = useToast();
-  const { invalidateGame } = useGameMutations();
+  const { invalidateAfterProcessRound } = useGameMutations();
 
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
-  // Invalidate game data on success
+  // Invalidate game data on success (detail + rounds + eliminations + winners)
   useEffect(() => {
     if (isSuccess) {
-      invalidateGame(gameId);
+      invalidateAfterProcessRound(gameId);
       toast({
         title: 'Round Processed',
         description: 'The round has been completed. Check the results below.',
       });
     }
-  }, [isSuccess, gameId, invalidateGame, toast]);
+  }, [isSuccess, gameId, invalidateAfterProcessRound, toast]);
 
   const handleProcessRound = async () => {
     if (!chainId) {
