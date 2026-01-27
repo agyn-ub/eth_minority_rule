@@ -45,36 +45,37 @@ export async function handleRoundCompleted(
       'Round completed - processing eliminations'
     );
 
-    // Fetch all votes for this round to determine who was eliminated
-    const votesResult = await client.query(
-      `SELECT player_address, vote
-       FROM votes
-       WHERE game_id = $1 AND round = $2`,
-      [gameId.toString(), round]
+    // Single UPDATE query - mark all majority voters as eliminated
+    const result = await client.query(
+      `UPDATE eliminations
+       SET eliminated = true, eliminated_round = $1
+       WHERE game_id = $2
+         AND player_address IN (
+           SELECT player_address
+           FROM votes
+           WHERE game_id = $2
+             AND round = $1
+             AND vote != $3
+         )`,
+      [round, gameId.toString(), minorityVote]
     );
 
-    // Determine who got eliminated (players who voted with MAJORITY)
-    // In Minority Rule: minorities survive, majorities are eliminated
-    const eliminatedPlayers = votesResult.rows
-      .filter((vote) => vote.vote !== minorityVote)
-      .map((vote) => vote.player_address);
-
-    // Update eliminations for each eliminated player
-    if (eliminatedPlayers.length > 0) {
-      for (const playerAddress of eliminatedPlayers) {
-        await client.query(
-          `UPDATE eliminations
-           SET eliminated = $1, eliminated_round = $2
-           WHERE game_id = $3 AND player_address = $4`,
-          [true, round, gameId.toString(), playerAddress]
-        );
-      }
-
+    if (result.rowCount > 0) {
       logger.info(
-        { gameId: gameId.toString(), round, count: eliminatedPlayers.length },
+        { gameId: gameId.toString(), round, count: result.rowCount },
         'Players marked as eliminated'
       );
     }
+
+    // Fetch eliminated players for broadcast
+    const votesResult = await client.query(
+      `SELECT player_address
+       FROM votes
+       WHERE game_id = $1 AND round = $2 AND vote != $3`,
+      [gameId.toString(), round, minorityVote]
+    );
+
+    const eliminatedPlayers = votesResult.rows.map((vote) => vote.player_address);
 
     // Check if game exists
     const gameCheck = await client.query('SELECT game_id FROM games WHERE game_id = $1', [
