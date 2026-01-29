@@ -124,6 +124,13 @@ export interface BatchPlayerGameDetail {
   prize_amount?: string;
 }
 
+export interface PaginatedGamesResult {
+  games: Game[];
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+}
+
 // Query functions
 
 export const getGame = async (gameId: number | string): Promise<Game | null> => {
@@ -140,33 +147,77 @@ export const getGame = async (gameId: number | string): Promise<Game | null> => 
   return data;
 };
 
-export const getActiveGames = async (): Promise<Game[]> => {
-  const { data, error } = await supabase
-    .from('games')
-    .select('*')
-    .in('state', ['ZeroPhase', 'CommitPhase', 'RevealPhase'])
-    .order('block_number', { ascending: false });
+export const getActiveGames = async (
+  page = 1,
+  limit = 20
+): Promise<PaginatedGamesResult> => {
+  const offset = (page - 1) * limit;
 
-  if (error) {
-    console.error('Error fetching active games:', error);
-    return [];
+  // Fetch data and count in parallel
+  const [dataResult, countResult] = await Promise.all([
+    supabase
+      .from('games')
+      .select('*')
+      .in('state', ['ZeroPhase', 'CommitPhase', 'RevealPhase'])
+      .order('block_number', { ascending: false })
+      .range(offset, offset + limit - 1),  // Server-side pagination!
+
+    supabase
+      .from('games')
+      .select('*', { count: 'exact', head: true })
+      .in('state', ['ZeroPhase', 'CommitPhase', 'RevealPhase'])
+  ]);
+
+  if (dataResult.error) {
+    console.error('Error fetching active games:', dataResult.error);
+    return { games: [], totalCount: 0, totalPages: 0, currentPage: page };
   }
-  return data || [];
+
+  const totalCount = countResult.count || 0;
+  const totalPages = Math.ceil(totalCount / limit);
+
+  return {
+    games: dataResult.data || [],
+    totalCount,
+    totalPages,
+    currentPage: page,
+  };
 };
 
-export const getCompletedGames = async (): Promise<Game[]> => {
-  const { data, error } = await supabase
-    .from('games')
-    .select('*')
-    .eq('state', 'Completed')
-    .order('block_number', { ascending: false })
-    .limit(20);
+export const getCompletedGames = async (
+  page = 1,
+  limit = 20
+): Promise<PaginatedGamesResult> => {
+  const offset = (page - 1) * limit;
 
-  if (error) {
-    console.error('Error fetching completed games:', error);
-    return [];
+  const [dataResult, countResult] = await Promise.all([
+    supabase
+      .from('games')
+      .select('*')
+      .eq('state', 'Completed')
+      .order('block_number', { ascending: false })
+      .range(offset, offset + limit - 1),
+
+    supabase
+      .from('games')
+      .select('*', { count: 'exact', head: true })
+      .eq('state', 'Completed')
+  ]);
+
+  if (dataResult.error) {
+    console.error('Error fetching completed games:', dataResult.error);
+    return { games: [], totalCount: 0, totalPages: 0, currentPage: page };
   }
-  return data || [];
+
+  const totalCount = countResult.count || 0;
+  const totalPages = Math.ceil(totalCount / limit);
+
+  return {
+    games: dataResult.data || [],
+    totalCount,
+    totalPages,
+    currentPage: page,
+  };
 };
 
 export const getGamePlayers = async (gameId: number | string): Promise<Player[]> => {
@@ -174,7 +225,8 @@ export const getGamePlayers = async (gameId: number | string): Promise<Player[]>
     .from('players')
     .select('*')
     .eq('game_id', gameId.toString())
-    .order('block_number', { ascending: true });
+    .order('block_number', { ascending: true })
+    .limit(1000);  // Safety limit (can increase if needed)
 
   if (error) {
     console.error('Error fetching players:', error);
@@ -191,6 +243,9 @@ export const getGameVotes = async (gameId: number | string, round?: number): Pro
 
   if (round !== undefined) {
     query = query.eq('round', round);
+  } else {
+    // Safety: if no round specified, limit to recent 100 votes
+    query = query.limit(100);
   }
 
   const { data, error } = await query.order('block_number', { ascending: true });
@@ -210,6 +265,9 @@ export const getGameCommits = async (gameId: number | string, round?: number): P
 
   if (round !== undefined) {
     query = query.eq('round', round);
+  } else {
+    // Safety: if no round specified, limit to recent 100 commits
+    query = query.limit(100);
   }
 
   const { data, error } = await query.order('block_number', { ascending: true });

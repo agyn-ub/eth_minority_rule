@@ -1,0 +1,13 @@
+schema: 'http://localhost:42069/graphql'
+documents: 'src/**/*.{ts,tsx}'
+generates:
+  src/lib/graphql/generated.ts:
+    plugins:
+      - typescript
+      - typescript-operations
+      - typescript-urql
+    config:
+      withHooks: false  # We'll use React Query, not urql hooks
+      scalars:
+        BigInt: string  # Ponder bigint → string
+        Bytes: string   # 0x... hex strings

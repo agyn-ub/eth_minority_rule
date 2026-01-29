@@ -24,9 +24,10 @@ export function useGameMutations() {
   );
 
   const invalidateGameLists = useCallback(async () => {
+    // Invalidate all pages of active and completed games
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.games.active }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.games.completed }),
+      queryClient.invalidateQueries({ queryKey: ['games', 'active'] }),
+      queryClient.invalidateQueries({ queryKey: ['games', 'completed'] }),
     ]);
   }, [queryClient]);
 

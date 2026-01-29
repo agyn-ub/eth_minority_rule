@@ -24,8 +24,8 @@ export const queryKeys = {
   // Game-related keys
   games: {
     all: ['games'] as const,
-    active: ['games', 'active'] as const,
-    completed: ['games', 'completed'] as const,
+    active: (page = 1) => ['games', 'active', page] as const,  // Add page param
+    completed: (page = 1) => ['games', 'completed', page] as const,  // Add page param
     detail: (gameId: number | string) => ['games', 'detail', String(gameId)] as const,
     players: (gameId: number | string) => ['games', 'detail', String(gameId), 'players'] as const,
     votes: (gameId: number | string, round?: number) =>

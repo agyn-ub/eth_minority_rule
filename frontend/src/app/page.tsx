@@ -8,26 +8,34 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { CreateGameModal } from '@/components/CreateGameModal';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Pagination } from '@/components/ui/pagination';
-
-const GAMES_PER_PAGE = 9;
+import { GameCardSkeletonGrid } from '@/components/GameCardSkeleton';
 
 export default function Home() {
   // Tab and pagination state
   const [activeTab, setActiveTab] = useState('ongoing');
-  const [ongoingPage, setOngoingPage] = useState(1);
-  const [newPage, setNewPage] = useState(1);
+
+  // Separate page state for each tab
+  const [activePage, setActivePage] = useState(1);
   const [completedPage, setCompletedPage] = useState(1);
 
-  // Replace manual polling with React Query
-  const { activeGames, completedGames, isLoading } = useGameLists();
+  // Fetch paginated data with server-side pagination
+  const {
+    activeGames,
+    completedGames,
+    activeGamesTotal,
+    activeGamesTotalPages,
+    completedGamesTotal,
+    completedGamesTotalPages,
+    isLoading,
+    isLoadingActive,
+    isLoadingCompleted,
+  } = useGameLists(activePage, completedPage);
 
-  // Filter games into categories
-  // Ongoing: active voting phases (CommitPhase or RevealPhase)
+  // Filter ongoing and new games (client-side filtering on small dataset)
   const ongoingGames = activeGames.filter(
     (game) => game.state === 'CommitPhase' || game.state === 'RevealPhase'
   );
 
-  // New: round 1 games (not ZeroPhase, not Completed)
   const newGames = activeGames.filter(
     (game) =>
       game.current_round === 1 &&
@@ -35,30 +43,9 @@ export default function Home() {
       game.state !== 'ZeroPhase'
   );
 
-  // Pagination helper
-  const paginateGames = (games: typeof activeGames, currentPage: number) => {
-    const startIndex = (currentPage - 1) * GAMES_PER_PAGE;
-    const endIndex = startIndex + GAMES_PER_PAGE;
-    return games.slice(startIndex, endIndex);
-  };
-
-  // Paginated game lists
-  const paginatedOngoingGames = paginateGames(ongoingGames, ongoingPage);
-  const paginatedNewGames = paginateGames(newGames, newPage);
-  const paginatedCompletedGames = paginateGames(completedGames, completedPage);
-
-  // Calculate total pages
-  const ongoingTotalPages = Math.ceil(ongoingGames.length / GAMES_PER_PAGE);
-  const newTotalPages = Math.ceil(newGames.length / GAMES_PER_PAGE);
-  const completedTotalPages = Math.ceil(completedGames.length / GAMES_PER_PAGE);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-muted-foreground">Loading games...</p>
-      </div>
-    );
-  }
+  // Calculate totals for each category
+  const ongoingCount = ongoingGames.length;
+  const newCount = newGames.length;
 
   return (
     <div className="space-y-8">
@@ -99,7 +86,7 @@ export default function Home() {
       </div>
 
       {/* Empty state when no games exist */}
-      {ongoingGames.length === 0 && newGames.length === 0 && completedGames.length === 0 && (
+      {ongoingCount === 0 && newCount === 0 && completedGamesTotal === 0 && (
         <Card>
           <CardHeader>
             <CardTitle>No Games Yet</CardTitle>
@@ -112,23 +99,27 @@ export default function Home() {
       )}
 
       {/* Tabs with game categories */}
-      {(ongoingGames.length > 0 || newGames.length > 0 || completedGames.length > 0) && (
+      {(ongoingCount > 0 || newCount > 0 || completedGamesTotal > 0) && (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full max-w-2xl mx-auto">
             <TabsTrigger value="ongoing" className="flex-1">
-              Ongoing <span className="font-bold ml-1">({ongoingGames.length})</span>
+              Ongoing <span className="font-bold ml-1">({ongoingCount})</span>
             </TabsTrigger>
             <TabsTrigger value="new" className="flex-1">
-              New <span className="font-bold ml-1">({newGames.length})</span>
+              New <span className="font-bold ml-1">({newCount})</span>
             </TabsTrigger>
             <TabsTrigger value="completed" className="flex-1">
-              Completed <span className="font-bold ml-1">({completedGames.length})</span>
+              Completed <span className="font-bold ml-1">({completedGamesTotal})</span>
             </TabsTrigger>
           </TabsList>
 
           {/* Ongoing Games Tab */}
           <TabsContent value="ongoing">
-            {paginatedOngoingGames.length === 0 ? (
+            {isLoadingActive && ongoingGames.length === 0 ? (
+              // Show skeletons on first load (no cached data)
+              <GameCardSkeletonGrid count={6} />
+            ) : ongoingGames.length === 0 ? (
+              // Empty state (after data loads)
               <Card>
                 <CardContent className="pt-6">
                   <p className="text-center text-muted-foreground">
@@ -137,26 +128,31 @@ export default function Home() {
                 </CardContent>
               </Card>
             ) : (
+              // Show actual game cards
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {paginatedOngoingGames.map((game) => (
+                  {ongoingGames.map((game) => (
                     <GameCard key={game.game_id} game={game} />
                   ))}
                 </div>
-                <Pagination
-                  currentPage={ongoingPage}
-                  totalPages={ongoingTotalPages}
-                  onPageChange={setOngoingPage}
-                  totalItems={ongoingGames.length}
-                  itemsPerPage={GAMES_PER_PAGE}
-                />
+                {activeGamesTotalPages > 1 && (
+                  <Pagination
+                    currentPage={activePage}
+                    totalPages={activeGamesTotalPages}
+                    onPageChange={setActivePage}
+                    totalItems={activeGamesTotal}
+                    itemsPerPage={20}
+                  />
+                )}
               </>
             )}
           </TabsContent>
 
           {/* New Games Tab */}
           <TabsContent value="new">
-            {paginatedNewGames.length === 0 ? (
+            {isLoadingActive && newGames.length === 0 ? (
+              <GameCardSkeletonGrid count={6} />
+            ) : newGames.length === 0 ? (
               <Card>
                 <CardContent className="pt-6 space-y-4">
                   <p className="text-center text-muted-foreground">
@@ -170,24 +166,28 @@ export default function Home() {
             ) : (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {paginatedNewGames.map((game) => (
+                  {newGames.map((game) => (
                     <GameCard key={game.game_id} game={game} />
                   ))}
                 </div>
-                <Pagination
-                  currentPage={newPage}
-                  totalPages={newTotalPages}
-                  onPageChange={setNewPage}
-                  totalItems={newGames.length}
-                  itemsPerPage={GAMES_PER_PAGE}
-                />
+                {activeGamesTotalPages > 1 && (
+                  <Pagination
+                    currentPage={activePage}
+                    totalPages={activeGamesTotalPages}
+                    onPageChange={setActivePage}
+                    totalItems={activeGamesTotal}
+                    itemsPerPage={20}
+                  />
+                )}
               </>
             )}
           </TabsContent>
 
           {/* Completed Games Tab */}
           <TabsContent value="completed">
-            {paginatedCompletedGames.length === 0 ? (
+            {isLoadingCompleted && completedGames.length === 0 ? (
+              <GameCardSkeletonGrid count={6} />
+            ) : completedGames.length === 0 ? (
               <Card>
                 <CardContent className="pt-6">
                   <p className="text-center text-muted-foreground">
@@ -198,17 +198,19 @@ export default function Home() {
             ) : (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {paginatedCompletedGames.map((game) => (
+                  {completedGames.map((game) => (
                     <GameCard key={game.game_id} game={game} />
                   ))}
                 </div>
-                <Pagination
-                  currentPage={completedPage}
-                  totalPages={completedTotalPages}
-                  onPageChange={setCompletedPage}
-                  totalItems={completedGames.length}
-                  itemsPerPage={GAMES_PER_PAGE}
-                />
+                {completedGamesTotalPages > 1 && (
+                  <Pagination
+                    currentPage={completedPage}
+                    totalPages={completedGamesTotalPages}
+                    onPageChange={setCompletedPage}
+                    totalItems={completedGamesTotal}
+                    itemsPerPage={20}
+                  />
+                )}
               </>
             )}
           </TabsContent>
