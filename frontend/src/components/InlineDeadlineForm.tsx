@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useWriteContract, useWaitForTransactionReceipt, useAccount } from 'wagmi';
-import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,14 +16,13 @@ interface InlineDeadlineFormProps {
 }
 
 export function InlineDeadlineForm({ game }: InlineDeadlineFormProps) {
-  const queryClient = useQueryClient();
   const { address } = useAccount();
   const { toast } = useToast();
 
   const [commitDuration, setCommitDuration] = useState('300');
   const [revealDuration, setRevealDuration] = useState('180');
 
-  const { writeContract, data: hash, isPending, reset } = useWriteContract();
+  const { writeContract, data: hash, isPending, isError, error, reset } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   // Determine which form to show
@@ -34,18 +32,24 @@ export function InlineDeadlineForm({ game }: InlineDeadlineFormProps) {
     game.commit_deadline &&
     Date.now() > Number(game.commit_deadline) * 1000;
 
-  // Reset success state after 2 seconds
+  // Show success toast when transaction confirms
+  // Let adaptive polling (45-60s) naturally update the UI
   useEffect(() => {
     if (isSuccess) {
-      const timer = setTimeout(() => {
-        reset();
-        // Invalidate queries to refetch game data
-        queryClient.invalidateQueries({ queryKey: ['my-games', address?.toLowerCase()] });
-        queryClient.invalidateQueries({ queryKey: ['game', game.game_id] });
-      }, 2000);
-      return () => clearTimeout(timer);
+      toast({
+        title: 'Deadline Set Successfully!',
+        description: 'The game will update shortly once the blockchain event is indexed.',
+      });
     }
-  }, [isSuccess, reset, queryClient, game.game_id, address]);
+  }, [isSuccess, toast]);
+
+  // Handle transaction errors
+  useEffect(() => {
+    if (isError) {
+      handleError(error);
+      reset(); // Allow retry
+    }
+  }, [isError, error, reset]);
 
   const handleSetCommitDeadline = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,7 +173,7 @@ export function InlineDeadlineForm({ game }: InlineDeadlineFormProps) {
     );
   }
 
-  // Success state
+  // Success state - persists until polling updates the game state
   if (isSuccess) {
     return (
       <Card className="border-success/50 bg-success/10">
@@ -181,7 +185,7 @@ export function InlineDeadlineForm({ game }: InlineDeadlineFormProps) {
             <div>
               <h4 className="font-bold text-success">Deadline set successfully!</h4>
               <p className="text-sm text-muted-foreground">
-                Players can now proceed to the next phase.
+                The game will update within the next minute as the blockchain event is indexed.
               </p>
             </div>
           </div>
