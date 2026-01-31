@@ -32,3 +32,15 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Enable TanStack Query DevTools browser extension
+declare global {
+  interface Window {
+    __TANSTACK_QUERY_CLIENT__: import('@tanstack/query-core').QueryClient;
+  }
+}
+
+// Only assign in browser environment (not during SSR)
+if (typeof window !== 'undefined') {
+  window.__TANSTACK_QUERY_CLIENT__ = queryClient;
+}
