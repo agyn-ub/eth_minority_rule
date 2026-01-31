@@ -4,7 +4,7 @@ import { queryKeys } from '@/lib/query-keys';
 
 /**
  * Hook for fetching round history
- * Polls every 5 seconds to catch new completed rounds
+ * No polling - relies on refetchOnWindowFocus and manual invalidation
  */
 export function useGameRounds(gameId: number | string | undefined, options?: {
   enabled?: boolean;
@@ -13,14 +13,15 @@ export function useGameRounds(gameId: number | string | undefined, options?: {
     queryKey: queryKeys.games.rounds(gameId!),
     queryFn: () => getGameRounds(gameId!),
     enabled: gameId !== undefined && options?.enabled !== false,
-    refetchInterval: 5_000, // 5 seconds
+    refetchInterval: false, // No polling
+    refetchOnWindowFocus: true,
     placeholderData: (previousData) => previousData,
   });
 }
 
 /**
  * Hook for fetching game winners
- * Polls every 10 seconds (only relevant for completed games)
+ * No polling - only relevant for completed games (static data)
  */
 export function useGameWinners(gameId: number | string | undefined, options?: {
   enabled?: boolean;
@@ -29,7 +30,8 @@ export function useGameWinners(gameId: number | string | undefined, options?: {
     queryKey: queryKeys.games.winners(gameId!),
     queryFn: () => getGameWinners(gameId!),
     enabled: gameId !== undefined && options?.enabled !== false,
-    refetchInterval: 10_000, // 10 seconds
+    refetchInterval: false, // No polling for static winner data
+    refetchOnWindowFocus: true,
     placeholderData: (previousData) => previousData,
   });
 }

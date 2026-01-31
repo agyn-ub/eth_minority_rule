@@ -1,44 +1,65 @@
-import { createClient, fetchExchange, subscriptionExchange } from 'urql';
-import { createClient as createWSClient } from 'graphql-ws';
-
 const GRAPHQL_URL = process.env.NEXT_PUBLIC_PONDER_GRAPHQL_URL || 'http://localhost:42069/graphql';
-const WS_URL = GRAPHQL_URL.replace('http', 'ws');
 
-// WebSocket client for subscriptions
-const wsClient = typeof window !== 'undefined' ? createWSClient({
-  url: WS_URL,
-}) : null;
+console.log('[GraphQL Client] Using URL:', GRAPHQL_URL);
 
-// urql client
-export const graphqlClient = createClient({
-  url: GRAPHQL_URL,
-  exchanges: [
-    fetchExchange,  // HTTP queries
-    ...(wsClient ? [subscriptionExchange({
-      forwardSubscription(operation) {
-        return {
-          subscribe: (sink: any) => {
-            const dispose = wsClient!.subscribe(operation as any, sink);
-            return {
-              unsubscribe: dispose,
-            };
-          },
-        };
-      },
-    })] : []),
-  ],
-});
-
-// Helper for React Query
+// Simple fetch-based GraphQL client for React Query
+// Note: Ponder does NOT support WebSocket subscriptions - using polling instead
 export async function graphqlRequest<TData, TVariables = any>(
-  query: string | any, // Accept both string and DocumentNode
+  query: string | any,
   variables?: TVariables
 ): Promise<TData> {
-  const result = await graphqlClient.query(query, variables as any).toPromise();
+  // Extract query string from gql tagged template
+  let queryString: string;
 
-  if (result.error) {
-    throw new Error(result.error.message);
+  if (typeof query === 'string') {
+    queryString = query;
+  } else if (query?.loc?.source?.body) {
+    queryString = query.loc.source.body;
+  } else if (typeof query?.toString === 'function') {
+    queryString = query.toString();
+  } else {
+    console.error('[GraphQL Request] Invalid query format:', query);
+    throw new Error('Invalid query format');
   }
 
-  return result.data as TData;
+  const response = await fetch(GRAPHQL_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({
+      query: queryString,
+      variables: variables || {},
+    }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    console.error('[GraphQL Response] Error:', text);
+    throw new Error(`GraphQL request failed: ${response.status} ${response.statusText}`);
+  }
+
+  const contentType = response.headers.get('content-type');
+  if (!contentType?.includes('application/json')) {
+    const text = await response.text();
+    console.error('[GraphQL Response] Non-JSON response:', text.substring(0, 500));
+    throw new Error(`Expected JSON but got ${contentType}`);
+  }
+
+  const json = await response.json();
+
+  if (json.errors) {
+    console.error('[GraphQL Errors]:', json.errors);
+    throw new Error(json.errors[0]?.message || 'GraphQL query failed');
+  }
+
+  return json.data as TData;
 }
+
+// Legacy export for backwards compatibility
+export const graphqlClient = {
+  query: () => {
+    throw new Error('Direct graphqlClient usage deprecated, use graphqlRequest instead');
+  },
+};

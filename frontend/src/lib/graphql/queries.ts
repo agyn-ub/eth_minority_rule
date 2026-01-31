@@ -1,14 +1,14 @@
 import { gql } from 'urql';
 
-// Games list with pagination
+// Games list with pagination (cursor-based)
 export const GET_ACTIVE_GAMES = gql`
-  query GetActiveGames($limit: Int!, $offset: Int!) {
+  query GetActiveGames($limit: Int!, $after: String) {
     gamess(
       where: {
         state_in: ["ZeroPhase", "CommitPhase", "RevealPhase"]
       }
       limit: $limit
-      offset: $offset
+      after: $after
       orderBy: "block_number"
       orderDirection: "desc"
     ) {
@@ -39,11 +39,11 @@ export const GET_ACTIVE_GAMES = gql`
 `;
 
 export const GET_COMPLETED_GAMES = gql`
-  query GetCompletedGames($limit: Int!, $offset: Int!) {
+  query GetCompletedGames($limit: Int!, $after: String) {
     gamess(
       where: { state: "Completed" }
       limit: $limit
-      offset: $offset
+      after: $after
       orderBy: "block_number"
       orderDirection: "desc"
     ) {
@@ -62,6 +62,7 @@ export const GET_COMPLETED_GAMES = gql`
       }
       pageInfo {
         hasNextPage
+        endCursor
       }
     }
   }

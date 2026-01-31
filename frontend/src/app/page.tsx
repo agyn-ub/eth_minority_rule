@@ -32,15 +32,13 @@ export default function Home() {
   } = useGameLists(activePage, completedPage);
 
   // Filter ongoing and new games (client-side filtering on small dataset)
+  // TEMPORARILY SHOWING ALL GAMES FOR DEBUGGING
   const ongoingGames = activeGames.filter(
-    (game) => game.state === 'CommitPhase' || game.state === 'RevealPhase'
+    (game) => game.current_round > 1 // Show all ongoing games regardless of state
   );
 
   const newGames = activeGames.filter(
-    (game) =>
-      game.current_round === 1 &&
-      game.state !== 'Completed' &&
-      game.state !== 'ZeroPhase'
+    (game) => game.current_round === 1 // Show all new games regardless of state
   );
 
   // Calculate totals for each category

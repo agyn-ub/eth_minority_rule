@@ -35,6 +35,7 @@ interface GamesResponse {
 
 /**
  * Hook for fetching active games with pagination via Ponder GraphQL
+ * Uses cursor-based pagination (not offset-based)
  * Refetches on window focus and manual refresh (no auto-polling)
  */
 export function useActiveGames(page = 1) {
@@ -42,34 +43,36 @@ export function useActiveGames(page = 1) {
     queryKey: queryKeys.games.active(page),
     queryFn: async () => {
       const limit = 20;
-      const offset = (page - 1) * limit;
+      // For now, just fetch first page (cursor pagination needs refactoring)
+      const after = undefined; // TODO: Track cursors properly
 
-      const data = await graphqlRequest<GamesResponse, { limit: number; offset: number }>(
+      const data = await graphqlRequest<GamesResponse, { limit: number; after?: string }>(
         GET_ACTIVE_GAMES,
-        { limit, offset }
+        { limit, after }
       );
 
       // Transform to match expected format
       return {
         games: data.gamess.items,
-        totalCount: data.gamess.items.length, // Approximate (GraphQL doesn't return total)
+        totalCount: data.gamess.items.length,
         totalPages: data.gamess.pageInfo.hasNextPage ? page + 1 : page,
         currentPage: page,
+        endCursor: data.gamess.pageInfo.endCursor,
       };
     },
-    // Disabled auto-polling - only refetches on:
-    // 1. Window focus (when user returns to tab)
-    // 2. Manual refetch (button click)
-    // 3. Cache invalidation (after creating/joining games)
-    refetchInterval: false,
-    refetchOnWindowFocus: true,
-    staleTime: 60_000, // Consider data fresh for 1 minute
+    // Auto-polling every 45 seconds for game updates
+    refetchInterval: 45_000, // Poll every 45 seconds
+    refetchIntervalInBackground: false, // Stop polling when tab is hidden (saves bandwidth)
+    refetchOnWindowFocus: true, // Refetch when returning to tab
+    staleTime: 45_000, // Match polling interval
+    gcTime: 90_000, // Clean up old cache after 90 seconds (prevents memory leak)
     placeholderData: (previousData) => previousData,
   });
 }
 
 /**
  * Hook for fetching completed games with pagination via Ponder GraphQL
+ * Uses cursor-based pagination (not offset-based)
  * Polls every 30 seconds (historical data changes less frequently)
  */
 export function useCompletedGames(page = 1) {
@@ -77,11 +80,12 @@ export function useCompletedGames(page = 1) {
     queryKey: queryKeys.games.completed(page),
     queryFn: async () => {
       const limit = 20;
-      const offset = (page - 1) * limit;
+      // For now, just fetch first page (cursor pagination needs refactoring)
+      const after = undefined; // TODO: Track cursors properly
 
-      const data = await graphqlRequest<GamesResponse, { limit: number; offset: number }>(
+      const data = await graphqlRequest<GamesResponse, { limit: number; after?: string }>(
         GET_COMPLETED_GAMES,
-        { limit, offset }
+        { limit, after }
       );
 
       return {
@@ -89,9 +93,15 @@ export function useCompletedGames(page = 1) {
         totalCount: data.gamess.items.length,
         totalPages: data.gamess.pageInfo.hasNextPage ? page + 1 : page,
         currentPage: page,
+        endCursor: data.gamess.pageInfo.endCursor,
       };
     },
-    refetchInterval: 30_000, // 30 seconds
+    // Completed games change less frequently - poll every 90 seconds
+    refetchInterval: 90_000,
+    refetchIntervalInBackground: false, // Stop polling when tab is hidden
+    refetchOnWindowFocus: true,
+    staleTime: 90_000,
+    gcTime: 120_000, // Clean up old cache after 2 minutes
     placeholderData: (previousData) => previousData,
   });
 }

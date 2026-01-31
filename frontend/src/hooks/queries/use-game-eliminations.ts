@@ -4,7 +4,7 @@ import { queryKeys } from '@/lib/query-keys';
 
 /**
  * Hook for fetching elimination records for a game
- * Polls every 5 seconds to catch new eliminations
+ * No polling - relies on refetchOnWindowFocus and manual invalidation
  */
 export function useGameEliminations(
   gameId: number | string | undefined,
@@ -14,7 +14,8 @@ export function useGameEliminations(
     queryKey: queryKeys.games.eliminations(gameId!),
     queryFn: () => getGameEliminations(gameId!),
     enabled: gameId !== undefined && options?.enabled !== false,
-    refetchInterval: 5_000, // Poll every 5 seconds
+    refetchInterval: false, // No polling
+    refetchOnWindowFocus: true,
     placeholderData: (previousData) => previousData,
   });
 }

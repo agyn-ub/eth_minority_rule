@@ -15,14 +15,9 @@ export function useGameVotes(
     queryKey: queryKeys.games.votes(gameId!, round),
     queryFn: () => getGameVotes(gameId!, round),
     enabled: gameId !== undefined && options?.enabled !== false,
-    refetchInterval: (query) => {
-      // If querying current round during RevealPhase, poll aggressively
-      if (options?.gameState && round === options.currentRound && options.gameState === 'RevealPhase') {
-        return 4_000; // 4 seconds - votes being revealed
-      }
-      // Historical rounds don't need frequent polling
-      return 30_000; // 30 seconds - default for all other cases
-    },
+    refetchInterval: false, // No polling - rely on refetchOnWindowFocus
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
     placeholderData: (previousData) => previousData,
   });
 }
@@ -40,14 +35,9 @@ export function useGameCommits(
     queryKey: queryKeys.games.commits(gameId!, round),
     queryFn: () => getGameCommits(gameId!, round),
     enabled: gameId !== undefined && options?.enabled !== false,
-    refetchInterval: (query) => {
-      // If querying current round during CommitPhase, poll aggressively
-      if (options?.gameState && round === options.currentRound && options.gameState === 'CommitPhase') {
-        return 4_000; // 4 seconds - commits being submitted
-      }
-      // Historical rounds don't need frequent polling
-      return 30_000; // 30 seconds - default for all other cases
-    },
+    refetchInterval: false, // No polling - rely on refetchOnWindowFocus
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
     placeholderData: (previousData) => previousData,
   });
 }

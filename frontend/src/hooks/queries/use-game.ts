@@ -23,19 +23,21 @@ export function useGame(gameId: number | string | undefined, options?: {
       const game = query.state.data as Game | null;
       if (!game) return false; // Don't poll if no data
 
-      // Adaptive polling based on game state
+      // Adaptive polling based on game state (reduced from previous aggressive intervals)
       switch (game.state) {
         case 'CommitPhase':
         case 'RevealPhase':
-          return 2_000; // 2 seconds - critical real-time
+          return 45_000; // 45 seconds
         case 'ZeroPhase':
-          return 5_000; // 5 seconds - waiting for players
+          return 60_000; // 60 seconds
         case 'Completed':
-          return 30_000; // 30 seconds - historical
+          return false; // No polling for completed games
         default:
-          return 5_000; // Default fallback
+          return 60_000; // Default fallback
       }
     },
+    refetchIntervalInBackground: false, // Stop polling when tab is hidden
+    refetchOnWindowFocus: true, // Refresh when user returns
     placeholderData: (previousData) => previousData,
   });
 }

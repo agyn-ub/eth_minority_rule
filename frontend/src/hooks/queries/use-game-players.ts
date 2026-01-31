@@ -4,7 +4,7 @@ import { queryKeys } from '@/lib/query-keys';
 
 /**
  * Hook for fetching players in a game
- * Polls every 5 seconds to catch new players joining
+ * No polling - relies on refetchOnWindowFocus and manual invalidation
  */
 export function useGamePlayers(gameId: number | string | undefined, options?: {
   enabled?: boolean;
@@ -13,7 +13,8 @@ export function useGamePlayers(gameId: number | string | undefined, options?: {
     queryKey: queryKeys.games.players(gameId!),
     queryFn: () => getGamePlayers(gameId!),
     enabled: gameId !== undefined && options?.enabled !== false,
-    refetchInterval: 5_000, // 5 seconds
+    refetchInterval: false, // No polling - rely on main game query + refetchOnWindowFocus
+    refetchOnWindowFocus: true,
     placeholderData: (previousData) => previousData,
   });
 }

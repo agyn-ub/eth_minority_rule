@@ -43,6 +43,24 @@ contract GetGameInfoScript is Script {
             address[] memory winners
         ) = game.getGameInfo(gameId);
 
+        // Check if game exists
+        if (creator == address(0)) {
+            console.log("Game Status: DOES NOT EXIST");
+            console.log("");
+            console.log("This game ID has not been created yet.");
+            console.log("===========================================");
+            return;
+        }
+
+        // Display game status
+        console.log("Game Status:");
+        if (totalPlayers == 0) {
+            console.log("  Game exists but no players have joined yet");
+        } else {
+            console.log("  Game is active with", totalPlayers, "player(s)");
+        }
+        console.log("");
+
         // Display basic info
         console.log("Question:", questionText);
         console.log("Entry Fee:", entryFee, "wei");
