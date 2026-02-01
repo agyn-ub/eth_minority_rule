@@ -70,8 +70,8 @@ export const GET_COMPLETED_GAMES = gql`
 
 // Single game detail
 export const GET_GAME = gql`
-  query GetGame($gameId: String!) {
-    game(id: $gameId) {
+  query GetGame($gameId: BigInt!) {
+    games(game_id: $gameId) {
       game_id
       question_text
       entry_fee
@@ -92,8 +92,8 @@ export const GET_GAME = gql`
 
 // Nested query - game with players
 export const GET_GAME_WITH_PLAYERS = gql`
-  query GetGameWithPlayers($gameId: String!) {
-    game(id: $gameId) {
+  query GetGameWithPlayers($gameId: BigInt!) {
+    games(game_id: $gameId) {
       game_id
       question_text
       state
@@ -119,7 +119,7 @@ export const GET_GAME_WITH_PLAYERS = gql`
 
 // Votes filtered by round
 export const GET_GAME_VOTES = gql`
-  query GetGameVotes($gameId: String!, $round: Int) {
+  query GetGameVotes($gameId: BigInt!, $round: Int) {
     votess(
       where: {
         game_id: $gameId
@@ -142,7 +142,7 @@ export const GET_GAME_VOTES = gql`
 
 // Commits filtered by round
 export const GET_GAME_COMMITS = gql`
-  query GetGameCommits($gameId: String!, $round: Int) {
+  query GetGameCommits($gameId: BigInt!, $round: Int) {
     commitss(
       where: {
         game_id: $gameId
@@ -165,7 +165,7 @@ export const GET_GAME_COMMITS = gql`
 
 // Players for a game
 export const GET_GAME_PLAYERS = gql`
-  query GetGamePlayers($gameId: String!) {
+  query GetGamePlayers($gameId: BigInt!) {
     playerss(
       where: { game_id: $gameId }
       orderBy: "block_number"
@@ -184,7 +184,7 @@ export const GET_GAME_PLAYERS = gql`
 
 // Rounds for a game
 export const GET_GAME_ROUNDS = gql`
-  query GetGameRounds($gameId: String!) {
+  query GetGameRounds($gameId: BigInt!) {
     roundss(
       where: { game_id: $gameId }
       orderBy: "round"
@@ -206,7 +206,7 @@ export const GET_GAME_ROUNDS = gql`
 
 // Winners for a game
 export const GET_GAME_WINNERS = gql`
-  query GetGameWinners($gameId: String!) {
+  query GetGameWinners($gameId: BigInt!) {
     winnerss(
       where: { game_id: $gameId }
     ) {
@@ -225,7 +225,7 @@ export const GET_GAME_WINNERS = gql`
 
 // Eliminations for a game
 export const GET_GAME_ELIMINATIONS = gql`
-  query GetGameEliminations($gameId: String!) {
+  query GetGameEliminations($gameId: BigInt!) {
     eliminationss(
       where: { game_id: $gameId }
     ) {

@@ -223,10 +223,10 @@ export const POLLING_INTERVALS = {
  */
 export const CACHE_TIMES = {
   /** Standard cache time for most queries */
-  standard: 90_000, // 90 seconds
+  standard: 600_000, // 600 seconds
 
   /** Extended cache time for historical data */
-  extended: 120_000, // 2 minutes
+  extended: 720_000, // 720 seconds
 } as const;
 
 /**

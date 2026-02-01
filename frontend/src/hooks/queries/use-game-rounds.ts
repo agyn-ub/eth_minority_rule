@@ -1,7 +1,30 @@
 import { useQuery } from '@tanstack/react-query';
-import { getGameRounds, getGameWinners } from '@/lib/supabase';
+import { graphqlRequest } from '@/lib/graphql/client';
+import { GET_GAME_ROUNDS, GET_GAME_WINNERS } from '@/lib/graphql/queries';
 import { queryKeys } from '@/lib/query-keys';
 import { POLLING_INTERVALS, COMMON_QUERY_OPTIONS } from '@/lib/polling-config';
+
+interface Round {
+  game_id: string;
+  round: number;
+  yes_count: number;
+  no_count: number;
+  minority_vote: boolean;
+  remaining_players: number;
+  completed_at: string;
+  block_number: string;
+  transaction_hash: string;
+}
+
+interface Winner {
+  game_id: string;
+  player_address: string;
+  prize_amount: string;
+  platform_fee: string;
+  paid_at: string;
+  block_number: string;
+  transaction_hash: string;
+}
 
 /**
  * Hook for fetching round history
@@ -25,7 +48,12 @@ export function useGameRounds(
 
   return useQuery({
     queryKey: queryKeys.games.rounds(gameId!),
-    queryFn: () => getGameRounds(gameId!),
+    queryFn: async () => {
+      const data = await graphqlRequest<{ roundss: { items: Round[] } }>(GET_GAME_ROUNDS, {
+        gameId: String(gameId),
+      });
+      return data.roundss.items;
+    },
     enabled: gameId !== undefined && options?.enabled !== false,
     refetchInterval: shouldPoll ? POLLING_INTERVALS.rounds.interval : false,
     placeholderData: (previousData) => previousData,
@@ -50,13 +78,20 @@ export function useGameWinners(
     gameState?: string;
   }
 ) {
+  const shouldPoll = options?.gameState === 'Completed';
+
   return useQuery({
     queryKey: queryKeys.games.winners(gameId!),
-    queryFn: () => getGameWinners(gameId!),
+    queryFn: async () => {
+      const data = await graphqlRequest<{ winnerss: { items: Winner[] } }>(GET_GAME_WINNERS, {
+        gameId: String(gameId),
+      });
+      return data.winnerss.items;
+    },
     enabled: gameId !== undefined && options?.enabled !== false,
     // Never poll - winners are static historical data
     // Will still refetch on window focus (via COMMON_QUERY_OPTIONS)
-    refetchInterval: false,
+    refetchInterval: shouldPoll ? POLLING_INTERVALS.votes.interval : false,
     placeholderData: (previousData) => previousData,
     ...COMMON_QUERY_OPTIONS,
   });

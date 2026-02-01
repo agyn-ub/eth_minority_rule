@@ -1,10 +1,28 @@
 import { useQuery } from '@tanstack/react-query';
-import { getGame, type Game } from '@/lib/supabase';
+import { graphqlRequest } from '@/lib/graphql/client';
+import { GET_GAME } from '@/lib/graphql/queries';
 import { queryKeys } from '@/lib/query-keys';
 import { POLLING_INTERVALS, COMMON_QUERY_OPTIONS } from '@/lib/polling-config';
 import { useGamePlayers } from './use-game-players';
 import { useGameVotes, useGameCommits } from './use-game-votes';
 import { useGameRounds, useGameWinners } from './use-game-rounds';
+
+export interface Game {
+  game_id: string;
+  question_text: string;
+  entry_fee: string;
+  creator_address: string;
+  state: string;
+  current_round: number;
+  total_players: number;
+  prize_pool: string;
+  commit_deadline?: string;
+  reveal_deadline?: string;
+  created_at: string;
+  updated_at: string;
+  block_number: string;
+  transaction_hash: string;
+}
 
 /**
  * Hook for fetching a single game with adaptive polling
@@ -32,7 +50,12 @@ export function useGame(gameId: number | string | undefined, options?: {
 }) {
   return useQuery({
     queryKey: queryKeys.games.detail(gameId!),
-    queryFn: () => getGame(gameId!),
+    queryFn: async () => {
+      const data = await graphqlRequest<{ games: Game }>(GET_GAME, {
+        gameId: String(gameId),
+      });
+      return data.games;
+    },
     enabled: gameId !== undefined && options?.enabled !== false,
     refetchInterval: (query) => {
       const game = query.state.data as Game | null;
