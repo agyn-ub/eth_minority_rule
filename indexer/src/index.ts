@@ -1,6 +1,7 @@
 import { ponder } from "@/generated";
 import { and, eq } from "@ponder/core";
 import * as schema from "../ponder.schema";
+import { notifyWebSocket } from "./utils/websocket-notifier";
 
 // ============ GameCreated Event ============
 ponder.on("MinorityRuleGame:GameCreated", async ({ event, context }) => {
@@ -24,6 +25,13 @@ ponder.on("MinorityRuleGame:GameCreated", async ({ event, context }) => {
   });
 
   console.log(`✅ Game ${event.args.gameId} created by ${event.args.creator}`);
+
+  // Notify WebSocket server
+  await notifyWebSocket('GameCreated', event.args.gameId, {
+    questionText: event.args.questionText,
+    entryFee: event.args.entryFee.toString(),
+    creator: event.args.creator.toLowerCase(),
+  });
 });
 
 // ============ PlayerJoined Event ============
@@ -66,6 +74,13 @@ ponder.on("MinorityRuleGame:PlayerJoined", async ({ event, context }) => {
   });
 
   console.log(`✅ Player ${event.args.player} joined game ${event.args.gameId}`);
+
+  // Notify WebSocket server
+  await notifyWebSocket('PlayerJoined', event.args.gameId, {
+    playerAddress: event.args.player.toLowerCase(),
+    totalPlayers: event.args.totalPlayers,
+    amount: event.args.amount.toString(),
+  });
 });
 
 // ============ VoteCommitted Event ============
@@ -85,6 +100,12 @@ ponder.on("MinorityRuleGame:VoteCommitted", async ({ event, context }) => {
   console.log(
     `✅ Vote committed by ${event.args.player} for game ${event.args.gameId} round ${event.args.round}`
   );
+
+  // Notify WebSocket server
+  await notifyWebSocket('VoteCommitted', event.args.gameId, {
+    round: event.args.round,
+    playerAddress: event.args.player.toLowerCase(),
+  });
 });
 
 // ============ VoteRevealed Event ============
@@ -106,6 +127,13 @@ ponder.on("MinorityRuleGame:VoteRevealed", async ({ event, context }) => {
     console.log(
       `✅ Vote revealed by ${event.args.player}: ${voteText} (game ${event.args.gameId} round ${event.args.round})`
     );
+
+    // Notify WebSocket server
+    await notifyWebSocket('VoteRevealed', event.args.gameId, {
+      round: event.args.round,
+      playerAddress: event.args.player.toLowerCase(),
+      vote: event.args.vote,
+    });
   } catch (error) {
     console.error(
       `❌ ERROR inserting vote for game ${event.args.gameId} round ${event.args.round}:`,
@@ -147,6 +175,12 @@ ponder.on("MinorityRuleGame:CommitPhaseStarted", async ({ event, context }) => {
   console.log(
     `✅ Commit phase started for game ${event.args.gameId} round ${event.args.round} (deadline: ${event.args.deadline})`
   );
+
+  // Notify WebSocket server
+  await notifyWebSocket('CommitPhaseStarted', event.args.gameId, {
+    round: event.args.round,
+    deadline: event.args.deadline,
+  });
 });
 
 // ============ RevealPhaseStarted Event ============
@@ -172,6 +206,12 @@ ponder.on("MinorityRuleGame:RevealPhaseStarted", async ({ event, context }) => {
   console.log(
     `✅ Reveal phase started for game ${event.args.gameId} round ${event.args.round} (deadline: ${event.args.deadline})`
   );
+
+  // Notify WebSocket server
+  await notifyWebSocket('RevealPhaseStarted', event.args.gameId, {
+    round: event.args.round,
+    deadline: event.args.deadline,
+  });
 });
 
 // ============ RoundCompleted Event ============
@@ -258,6 +298,15 @@ ponder.on("MinorityRuleGame:RoundCompleted", async ({ event, context }) => {
   console.log(
     `✅ Game ${event.args.gameId} state updated to ZeroPhase for round ${event.args.round + 1}`
   );
+
+  // Notify WebSocket server
+  await notifyWebSocket('RoundCompleted', event.args.gameId, {
+    round: event.args.round,
+    yesCount: event.args.yesCount,
+    noCount: event.args.noCount,
+    minorityVote: event.args.minorityVote,
+    votesRemaining: event.args.votesRemaining,
+  });
 });
 
 // ============ GameCompleted Event ============
@@ -296,4 +345,11 @@ ponder.on("MinorityRuleGame:GameCompleted", async ({ event, context }) => {
   console.log(
     `🎉 Game ${event.args.gameId} completed! ${event.args.winners.length} winner(s) | Prize per winner: ${event.args.prizePerWinner}`
   );
+
+  // Notify WebSocket server
+  await notifyWebSocket('GameCompleted', event.args.gameId, {
+    winners: event.args.winners.map(w => w.toLowerCase()),
+    prizePerWinner: event.args.prizePerWinner.toString(),
+    platformFee: event.args.platformFee.toString(),
+  });
 });
