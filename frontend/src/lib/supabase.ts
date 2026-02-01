@@ -133,93 +133,6 @@ export interface PaginatedGamesResult {
 
 // Query functions
 
-export const getGame = async (gameId: number | string): Promise<Game | null> => {
-  const { data, error } = await supabase
-    .from('games')
-    .select('*')
-    .eq('game_id', gameId.toString())
-    .single();
-
-  if (error) {
-    console.error('Error fetching game:', error);
-    return null;
-  }
-  return data;
-};
-
-export const getActiveGames = async (
-  page = 1,
-  limit = 20
-): Promise<PaginatedGamesResult> => {
-  const offset = (page - 1) * limit;
-
-  // Fetch data and count in parallel
-  const [dataResult, countResult] = await Promise.all([
-    supabase
-      .from('games')
-      .select('*')
-      .in('state', ['ZeroPhase', 'CommitPhase', 'RevealPhase'])
-      .order('block_number', { ascending: false })
-      .range(offset, offset + limit - 1),  // Server-side pagination!
-
-    supabase
-      .from('games')
-      .select('*', { count: 'exact', head: true })
-      .in('state', ['ZeroPhase', 'CommitPhase', 'RevealPhase'])
-  ]);
-
-  if (dataResult.error) {
-    console.error('Error fetching active games:', dataResult.error);
-    return { games: [], totalCount: 0, totalPages: 0, currentPage: page };
-  }
-
-  const totalCount = countResult.count || 0;
-  const totalPages = Math.ceil(totalCount / limit);
-
-  return {
-    games: dataResult.data || [],
-    totalCount,
-    totalPages,
-    currentPage: page,
-  };
-};
-
-export const getCompletedGames = async (
-  page = 1,
-  limit = 20
-): Promise<PaginatedGamesResult> => {
-  const offset = (page - 1) * limit;
-
-  const [dataResult, countResult] = await Promise.all([
-    supabase
-      .from('games')
-      .select('*')
-      .eq('state', 'Completed')
-      .order('block_number', { ascending: false })
-      .range(offset, offset + limit - 1),
-
-    supabase
-      .from('games')
-      .select('*', { count: 'exact', head: true })
-      .eq('state', 'Completed')
-  ]);
-
-  if (dataResult.error) {
-    console.error('Error fetching completed games:', dataResult.error);
-    return { games: [], totalCount: 0, totalPages: 0, currentPage: page };
-  }
-
-  const totalCount = countResult.count || 0;
-  const totalPages = Math.ceil(totalCount / limit);
-
-  return {
-    games: dataResult.data || [],
-    totalCount,
-    totalPages,
-    currentPage: page,
-  };
-};
-
 export const getGamePlayers = async (gameId: number | string): Promise<Player[]> => {
   const { data, error } = await supabase
     .from('players')
@@ -235,63 +148,7 @@ export const getGamePlayers = async (gameId: number | string): Promise<Player[]>
   return data || [];
 };
 
-export const getGameVotes = async (gameId: number | string, round?: number): Promise<Vote[]> => {
-  let query = supabase
-    .from('votes')
-    .select('*')
-    .eq('game_id', gameId.toString());
 
-  if (round !== undefined) {
-    query = query.eq('round', round);
-  } else {
-    // Safety: if no round specified, limit to recent 100 votes
-    query = query.limit(100);
-  }
-
-  const { data, error } = await query.order('block_number', { ascending: true });
-
-  if (error) {
-    console.error('Error fetching votes:', error);
-    return [];
-  }
-  return data || [];
-};
-
-export const getGameCommits = async (gameId: number | string, round?: number): Promise<Commit[]> => {
-  let query = supabase
-    .from('commits')
-    .select('*')
-    .eq('game_id', gameId.toString());
-
-  if (round !== undefined) {
-    query = query.eq('round', round);
-  } else {
-    // Safety: if no round specified, limit to recent 100 commits
-    query = query.limit(100);
-  }
-
-  const { data, error } = await query.order('block_number', { ascending: true });
-
-  if (error) {
-    console.error('Error fetching commits:', error);
-    return [];
-  }
-  return data || [];
-};
-
-export const getGameRounds = async (gameId: number | string): Promise<Round[]> => {
-  const { data, error } = await supabase
-    .from('rounds')
-    .select('*')
-    .eq('game_id', gameId.toString())
-    .order('round', { ascending: true });
-
-  if (error) {
-    console.error('Error fetching rounds:', error);
-    return [];
-  }
-  return data || [];
-};
 
 export const getGameEliminations = async (
   gameId: number | string
@@ -327,18 +184,6 @@ export const getPlayerElimination = async (
   return data;
 };
 
-export const getGameWinners = async (gameId: number | string): Promise<Winner[]> => {
-  const { data, error} = await supabase
-    .from('winners')
-    .select('*')
-    .eq('game_id', gameId.toString());
-
-  if (error) {
-    console.error('Error fetching winners:', error);
-    return [];
-  }
-  return data || [];
-};
 
 export const getPlayerGames = async (playerAddress: string): Promise<Player[]> => {
   const { data, error } = await supabase
@@ -359,7 +204,7 @@ export const getPlayerWins = async (playerAddress: string): Promise<Winner[]> =>
     .from('winners')
     .select('*')
     .eq('player_address', playerAddress.toLowerCase())
-    .order('block_number', { ascending: false});
+    .order('block_number', { ascending: false });
 
   if (error) {
     console.error('Error fetching player wins:', error);
@@ -373,7 +218,7 @@ export const getMyGames = async (creatorAddress: string): Promise<Game[]> => {
     .from('games')
     .select('*')
     .eq('creator_address', creatorAddress.toLowerCase())
-    .order('block_number', { ascending: false});
+    .order('block_number', { ascending: false });
 
   if (error) {
     console.error('Error fetching my games:', error);
@@ -478,54 +323,6 @@ export const getPlayerStats = async (playerAddress: string): Promise<PlayerStats
   };
 };
 
-export const getPlayerGameDetail = async (
-  playerAddress: string,
-  gameId: number | string
-): Promise<PlayerGameDetail | null> => {
-  const normalizedAddress = playerAddress.toLowerCase();
-  const gameIdStr = gameId.toString();
-
-  // Fetch all data in parallel
-  const [game, players, votes, rounds, winners] = await Promise.all([
-    getGame(gameIdStr),
-    getGamePlayers(gameIdStr),
-    getGameVotes(gameIdStr),
-    getGameRounds(gameIdStr),
-    getGameWinners(gameIdStr),
-  ]);
-
-  if (!game) {
-    return null;
-  }
-
-  // Find player info
-  const playerInfo = players.find(
-    (p) => p.player_address.toLowerCase() === normalizedAddress
-  );
-
-  if (!playerInfo) {
-    return null;
-  }
-
-  // Filter votes for this player
-  const playerVotes = votes.filter(
-    (v) => v.player_address.toLowerCase() === normalizedAddress
-  );
-
-  // Check if player is a winner
-  const winnerInfo = winners.find(
-    (w) => w.player_address.toLowerCase() === normalizedAddress
-  );
-
-  return {
-    game,
-    player_info: playerInfo,
-    votes: playerVotes,
-    rounds,
-    is_winner: !!winnerInfo,
-    prize_amount: winnerInfo?.prize_amount,
-  };
-};
 
 export const getBatchPlayerGameDetails = async (
   playerAddress: string,

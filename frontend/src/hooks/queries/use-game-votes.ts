@@ -54,7 +54,6 @@ export function useGameCommits(
     queryFn: () => getGameCommits(gameId!, round),
     enabled: gameId !== undefined && options?.enabled !== false,
     refetchInterval: shouldPoll ? POLLING_INTERVALS.commits.interval : false,
-    placeholderData: (previousData) => previousData,
     ...COMMON_QUERY_OPTIONS,
   });
 }

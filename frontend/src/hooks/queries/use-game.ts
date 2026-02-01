@@ -107,6 +107,7 @@ export function useGameDetail(gameId: number | string | undefined) {
     isLoadingGame: gameQuery.isLoading,
     isLoadingPlayers: playersQuery.isLoading,
     isLoadingVotes: votesQuery.isLoading,
+    isLoadingCommits: commitsQuery.isLoading,
 
     // Refetch all
     refetch: () => {

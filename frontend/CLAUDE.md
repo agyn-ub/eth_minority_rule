@@ -115,13 +115,14 @@ if (isSuccess) {
 ### React Query Architecture
 All data fetching uses React Query with:
 - **Query key factory**: `src/lib/query-keys.ts` for type-safe cache management
-- **Configurable polling**: `src/lib/polling-config.ts` centralizes all polling intervals
-  - Environment-based defaults (faster in development, conservative in production)
-  - Customizable via environment variables (see `.env.example`)
-  - Active phases (CommitPhase/RevealPhase): 45s production / 10s development
-  - Waiting phase (ZeroPhase): 60s production / 15s development
-  - Completed: No polling (data won't change)
-  - Game lists: 45-90s production / 15-30s development
+- **Required polling configuration**: `src/lib/polling-config.ts` centralizes all polling intervals
+  - All core intervals MUST be explicitly configured via environment variables
+  - App will crash with clear error messages if required variables are missing
+  - Recommended: 45-90s for production (bandwidth efficient), 10-15s for development (quick feedback)
+  - Active phases (CommitPhase/RevealPhase): Configurable via `NEXT_PUBLIC_POLL_GAME_ACTIVE`
+  - Waiting phase (ZeroPhase): Configurable via `NEXT_PUBLIC_POLL_GAME_WAITING`
+  - Completed: Configurable via `NEXT_PUBLIC_POLL_GAME_COMPLETED` (recommend: false)
+  - Game lists: Configurable via `NEXT_PUBLIC_POLL_GAMES_ACTIVE` and `NEXT_PUBLIC_POLL_GAMES_COMPLETED`
 - **Adaptive polling**: Primary queries (`useGame`) adjust intervals based on game state
 - **Supporting queries**: No independent polling (rely on cache invalidation + window focus)
 - **Cache invalidation**: Via `useGameMutations()` hook after blockchain writes
@@ -153,9 +154,10 @@ Location: `src/hooks/mutations/use-game-mutations.ts`
 The application uses a hierarchical polling strategy to minimize network requests while keeping data fresh.
 
 #### Configuration (`src/lib/polling-config.ts`)
-- **Environment-aware defaults**: Automatically uses faster intervals in development for quicker feedback
-- **Customizable via env vars**: Override defaults with `NEXT_PUBLIC_POLL_*` variables
+- **Explicit configuration required**: All core polling intervals must be set via environment variables
+- **No automatic defaults**: App will crash if required variables are missing (prevents accidental misconfigurations)
 - **Centralized management**: All polling logic in one place for easy tuning
+- **Validation**: Min 1000ms (1 second), Max 300000ms (5 minutes), or "false" to disable
 
 #### Query Hierarchy
 ```
@@ -179,20 +181,26 @@ Primary Query (useGame)
 4. **Cache invalidation**: After blockchain writes, all related queries refetch
 
 #### Environment Variables
+All polling intervals are REQUIRED and must be explicitly configured:
+
 ```bash
-# Development: Fast feedback (optional, these are defaults)
-NEXT_PUBLIC_POLL_GAME_ACTIVE=10000        # 10s for active phases
-NEXT_PUBLIC_POLL_GAME_WAITING=15000       # 15s for waiting
-NEXT_PUBLIC_POLL_GAMES_ACTIVE=15000       # 15s for game lists
+# Required: Core polling intervals (app will crash if not set)
+NEXT_PUBLIC_POLL_GAME_ACTIVE=45000        # Active phases (CommitPhase/RevealPhase)
+NEXT_PUBLIC_POLL_GAME_WAITING=60000       # Waiting phase (ZeroPhase)
+NEXT_PUBLIC_POLL_GAME_COMPLETED=false     # Completed games (recommend: false)
+NEXT_PUBLIC_POLL_GAMES_ACTIVE=45000       # Active games list
+NEXT_PUBLIC_POLL_GAMES_COMPLETED=90000    # Completed games list
 
-# Production: Bandwidth efficient (optional, these are defaults)
-NEXT_PUBLIC_POLL_GAME_ACTIVE=45000        # 45s for active phases
-NEXT_PUBLIC_POLL_GAME_WAITING=60000       # 60s for waiting
-NEXT_PUBLIC_POLL_GAMES_ACTIVE=45000       # 45s for game lists
-NEXT_PUBLIC_POLL_GAMES_COMPLETED=90000    # 90s for completed games
+# Optional: Fine-grained control (falls back to main intervals if not set)
+NEXT_PUBLIC_POLL_GAME_PLAYERS=60000       # Overrides POLL_GAME_WAITING
+NEXT_PUBLIC_POLL_GAME_COMMITS=45000       # Overrides POLL_GAME_ACTIVE
+NEXT_PUBLIC_POLL_GAME_VOTES=45000         # Overrides POLL_GAME_ACTIVE
+NEXT_PUBLIC_POLL_GAME_ROUNDS=45000        # Overrides POLL_GAME_ACTIVE
 
-# Disable polling completely
-NEXT_PUBLIC_POLL_GAME_ACTIVE=false
+# Recommended values:
+# - Development: 10000-15000ms for quick feedback
+# - Production: 45000-90000ms for bandwidth efficiency
+# - Set to "false" to disable polling
 ```
 
 #### Performance Considerations
@@ -313,20 +321,18 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 NEXT_PUBLIC_CONTRACT_ADDRESS_ANVIL=0x5FbDB2315678afecb367f032d93F642f64180aa3
 NEXT_PUBLIC_CONTRACT_ADDRESS_BASE_SEPOLIA=...
 NEXT_PUBLIC_CONTRACT_ADDRESS_BASE=...
+
+# Required: Polling intervals (milliseconds or "false" to disable)
+NEXT_PUBLIC_POLL_GAME_ACTIVE=45000
+NEXT_PUBLIC_POLL_GAME_WAITING=60000
+NEXT_PUBLIC_POLL_GAME_COMPLETED=false
+NEXT_PUBLIC_POLL_GAMES_ACTIVE=45000
+NEXT_PUBLIC_POLL_GAMES_COMPLETED=90000
 ```
 
-**Optional** polling configuration (see `.env.example` for full list):
-```bash
-# Customize polling intervals (values in milliseconds)
-# If not set, uses environment-aware defaults (faster in dev, conservative in prod)
-NEXT_PUBLIC_POLL_GAME_ACTIVE=45000        # Active game phases
-NEXT_PUBLIC_POLL_GAME_WAITING=60000       # Waiting phase
-NEXT_PUBLIC_POLL_GAME_COMPLETED=false     # Completed games (false = no polling)
-NEXT_PUBLIC_POLL_GAMES_ACTIVE=45000       # Active games list
-NEXT_PUBLIC_POLL_GAMES_COMPLETED=90000    # Completed games list
-```
+See `.env.example` for complete list and recommended values.
 
-See `src/lib/polling-config.ts` for detailed documentation on polling configuration.
+**Note**: Previous versions auto-configured polling intervals based on NODE_ENV. This has been removed to ensure explicit configuration. The app will crash with clear error messages if required variables are missing.
 
 ### Testing Locally
 1. Create game with test account

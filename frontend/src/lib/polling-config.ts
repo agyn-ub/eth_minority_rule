@@ -2,8 +2,8 @@
  * Polling Configuration for React Query
  *
  * This module centralizes all polling interval configurations for the application.
- * Intervals can be customized via environment variables to support different
- * settings for development (faster feedback) vs production (bandwidth optimization).
+ * All core polling intervals are REQUIRED via environment variables - the app will
+ * crash with clear error messages if required variables are missing.
  *
  * ## Polling Strategy
  *
@@ -17,98 +17,133 @@
  *
  * 3. **List Queries** (e.g., useActiveGames) - Fixed interval polling
  *
- * ## Environment Variables
+ * ## Required Environment Variables
  *
- * Set these in .env.local to customize intervals (values in milliseconds):
+ * These MUST be set in .env.local (app will crash if missing):
  *
- * - NEXT_PUBLIC_POLL_GAME_ACTIVE=45000      # Active game phases (CommitPhase/RevealPhase)
- * - NEXT_PUBLIC_POLL_GAME_WAITING=60000     # Waiting phase (ZeroPhase)
- * - NEXT_PUBLIC_POLL_GAME_COMPLETED=false   # Completed games (false = no polling)
- * - NEXT_PUBLIC_POLL_GAMES_ACTIVE=45000     # Active games list
- * - NEXT_PUBLIC_POLL_GAMES_COMPLETED=90000  # Completed games list
+ * - NEXT_PUBLIC_POLL_GAME_ACTIVE      # Active game phases (CommitPhase/RevealPhase)
+ * - NEXT_PUBLIC_POLL_GAME_WAITING     # Waiting phase (ZeroPhase)
+ * - NEXT_PUBLIC_POLL_GAME_COMPLETED   # Completed games (use "false" to disable)
+ * - NEXT_PUBLIC_POLL_GAMES_ACTIVE     # Active games list
+ * - NEXT_PUBLIC_POLL_GAMES_COMPLETED  # Completed games list
  *
- * ## Development Mode
+ * Values: positive integers in milliseconds OR "false" to disable
+ * Min: 1000ms (1 second), Max: 300000ms (5 minutes)
  *
- * When NODE_ENV=development and no env vars are set, uses faster defaults:
- * - Active phases: 10 seconds (vs 45s production)
- * - Waiting phases: 15 seconds (vs 60s production)
- * - Game lists: 15 seconds (vs 45s/90s production)
+ * ## Optional Environment Variables
  *
- * This provides faster feedback during local testing while maintaining
- * production efficiency when deployed.
+ * Fine-grained control (falls back to main intervals if not set):
+ *
+ * - NEXT_PUBLIC_POLL_GAME_PLAYERS  # Overrides POLL_GAME_WAITING
+ * - NEXT_PUBLIC_POLL_GAME_COMMITS  # Overrides POLL_GAME_ACTIVE
+ * - NEXT_PUBLIC_POLL_GAME_VOTES    # Overrides POLL_GAME_ACTIVE
+ * - NEXT_PUBLIC_POLL_GAME_ROUNDS   # Overrides POLL_GAME_ACTIVE
+ *
+ * ## Recommended Values
+ *
+ * - Development: 10000-15000ms for quick feedback
+ * - Production: 45000-90000ms for bandwidth efficiency
+ *
+ * See .env.example for complete configuration examples.
+ *
+ * ## Migration Note
+ *
+ * Previous versions auto-configured defaults based on NODE_ENV. This has been
+ * removed to ensure explicit configuration and prevent accidental misconfigurations.
  */
 
 // Type for interval values (milliseconds or false to disable)
 type IntervalValue = number | false;
 
 /**
- * Parse environment variable to interval value
- * Supports: "false", "0" (both disable polling), or millisecond numbers
+ * Parse and validate required environment variable for polling interval
+ * Throws error if missing or invalid
  */
-function parseInterval(envValue: string | undefined, defaultValue: IntervalValue): IntervalValue {
-  if (!envValue) return defaultValue;
-  if (envValue === 'false' || envValue === '0') return false;
+function parseRequiredInterval(
+  envValue: string | undefined,
+  varName: string
+): IntervalValue {
+  // Missing value
+  if (envValue === undefined || envValue === '') {
+    throw new Error(
+      `[Polling Config] Missing required environment variable: ${varName}\n` +
+      `Please set this in your .env.local file.\n` +
+      `See .env.example for recommended values.`
+    );
+  }
+
+  // Explicit disable
+  if (envValue === 'false' || envValue === '0') {
+    return false;
+  }
+
+  // Parse numeric value
   const parsed = parseInt(envValue, 10);
-  return isNaN(parsed) ? defaultValue : parsed;
+
+  // Validation
+  if (isNaN(parsed)) {
+    throw new Error(
+      `[Polling Config] Invalid value for ${varName}: "${envValue}"\n` +
+      `Expected: positive integer (milliseconds) or "false" to disable`
+    );
+  }
+
+  if (parsed < 1000) {
+    throw new Error(
+      `[Polling Config] ${varName} is too low: ${parsed}ms\n` +
+      `Minimum allowed: 1000ms (1 second)`
+    );
+  }
+
+  if (parsed > 300000) {
+    throw new Error(
+      `[Polling Config] ${varName} is too high: ${parsed}ms\n` +
+      `Maximum allowed: 300000ms (5 minutes)`
+    );
+  }
+
+  return parsed;
 }
 
 /**
- * Determine if we're in development mode
+ * Parse optional interval that falls back to another interval
  */
-const isDevelopment = process.env.NODE_ENV === 'development';
-
-/**
- * Default intervals for production (conservative, bandwidth-efficient)
- */
-const PRODUCTION_DEFAULTS = {
-  gameActive: 45_000,      // 45 seconds - active game phases
-  gameWaiting: 60_000,     // 60 seconds - waiting phase
-  gameCompleted: false,    // No polling for completed games
-  gamesActive: 45_000,     // 45 seconds - active games list
-  gamesCompleted: 90_000,  // 90 seconds - completed games list
-} as const;
-
-/**
- * Default intervals for development (faster feedback)
- */
-const DEVELOPMENT_DEFAULTS = {
-  gameActive: 10_000,      // 10 seconds - quick feedback for testing
-  gameWaiting: 15_000,     // 15 seconds - faster waiting state updates
-  gameCompleted: false,    // Still no polling for completed games
-  gamesActive: 15_000,     // 15 seconds - see new games faster
-  gamesCompleted: 30_000,  // 30 seconds - faster historical updates
-} as const;
-
-/**
- * Select base defaults based on environment
- */
-const BASE_DEFAULTS = isDevelopment ? DEVELOPMENT_DEFAULTS : PRODUCTION_DEFAULTS;
+function parseOptionalInterval(
+  envValue: string | undefined,
+  varName: string,
+  fallbackValue: IntervalValue
+): IntervalValue {
+  if (envValue === undefined || envValue === '') {
+    return fallbackValue;
+  }
+  return parseRequiredInterval(envValue, varName);
+}
 
 /**
  * Polling interval configuration
- * Uses environment variables if set, otherwise falls back to environment-specific defaults
+ * All core intervals are required and must be explicitly configured via environment variables
  */
 export const POLLING_INTERVALS = {
   /**
    * Individual game polling intervals (adaptive based on game state)
    */
   game: {
-    /** Active game phases (CommitPhase/RevealPhase) - most critical */
-    active: parseInterval(
+    /** Active game phases (CommitPhase/RevealPhase) - REQUIRED */
+    active: parseRequiredInterval(
       process.env.NEXT_PUBLIC_POLL_GAME_ACTIVE,
-      BASE_DEFAULTS.gameActive
+      'NEXT_PUBLIC_POLL_GAME_ACTIVE'
     ),
 
-    /** Waiting phase (ZeroPhase) - less urgent */
-    waiting: parseInterval(
+    /** Waiting phase (ZeroPhase) - REQUIRED */
+    waiting: parseRequiredInterval(
       process.env.NEXT_PUBLIC_POLL_GAME_WAITING,
-      BASE_DEFAULTS.gameWaiting
+      'NEXT_PUBLIC_POLL_GAME_WAITING'
     ),
 
-    /** Completed games - typically disabled */
-    completed: parseInterval(
+    /** Completed games - REQUIRED */
+    completed: parseRequiredInterval(
       process.env.NEXT_PUBLIC_POLL_GAME_COMPLETED,
-      BASE_DEFAULTS.gameCompleted
+      'NEXT_PUBLIC_POLL_GAME_COMPLETED'
     ),
   },
 
@@ -117,34 +152,50 @@ export const POLLING_INTERVALS = {
    * Each query can have its own interval, or falls back to game defaults
    */
   players: {
-    /** Players polling - defaults to game.waiting */
-    interval: parseInterval(
+    /** Players polling - optional, falls back to game.waiting */
+    interval: parseOptionalInterval(
       process.env.NEXT_PUBLIC_POLL_GAME_PLAYERS,
-      parseInterval(process.env.NEXT_PUBLIC_POLL_GAME_WAITING, BASE_DEFAULTS.gameWaiting)
+      'NEXT_PUBLIC_POLL_GAME_PLAYERS',
+      parseRequiredInterval(
+        process.env.NEXT_PUBLIC_POLL_GAME_WAITING,
+        'NEXT_PUBLIC_POLL_GAME_WAITING'
+      )
     ),
   },
 
   commits: {
-    /** Commits polling - defaults to game.active */
-    interval: parseInterval(
+    /** Commits polling - optional, falls back to game.active */
+    interval: parseOptionalInterval(
       process.env.NEXT_PUBLIC_POLL_GAME_COMMITS,
-      parseInterval(process.env.NEXT_PUBLIC_POLL_GAME_ACTIVE, BASE_DEFAULTS.gameActive)
+      'NEXT_PUBLIC_POLL_GAME_COMMITS',
+      parseRequiredInterval(
+        process.env.NEXT_PUBLIC_POLL_GAME_ACTIVE,
+        'NEXT_PUBLIC_POLL_GAME_ACTIVE'
+      )
     ),
   },
 
   votes: {
-    /** Votes polling - defaults to game.active */
-    interval: parseInterval(
+    /** Votes polling - optional, falls back to game.active */
+    interval: parseOptionalInterval(
       process.env.NEXT_PUBLIC_POLL_GAME_VOTES,
-      parseInterval(process.env.NEXT_PUBLIC_POLL_GAME_ACTIVE, BASE_DEFAULTS.gameActive)
+      'NEXT_PUBLIC_POLL_GAME_VOTES',
+      parseRequiredInterval(
+        process.env.NEXT_PUBLIC_POLL_GAME_ACTIVE,
+        'NEXT_PUBLIC_POLL_GAME_ACTIVE'
+      )
     ),
   },
 
   rounds: {
-    /** Rounds polling - defaults to game.active */
-    interval: parseInterval(
+    /** Rounds polling - optional, falls back to game.active */
+    interval: parseOptionalInterval(
       process.env.NEXT_PUBLIC_POLL_GAME_ROUNDS,
-      parseInterval(process.env.NEXT_PUBLIC_POLL_GAME_ACTIVE, BASE_DEFAULTS.gameActive)
+      'NEXT_PUBLIC_POLL_GAME_ROUNDS',
+      parseRequiredInterval(
+        process.env.NEXT_PUBLIC_POLL_GAME_ACTIVE,
+        'NEXT_PUBLIC_POLL_GAME_ACTIVE'
+      )
     ),
   },
 
@@ -152,16 +203,16 @@ export const POLLING_INTERVALS = {
    * Game list polling intervals (fixed intervals)
    */
   games: {
-    /** Active games list */
-    active: parseInterval(
+    /** Active games list - REQUIRED */
+    active: parseRequiredInterval(
       process.env.NEXT_PUBLIC_POLL_GAMES_ACTIVE,
-      BASE_DEFAULTS.gamesActive
+      'NEXT_PUBLIC_POLL_GAMES_ACTIVE'
     ),
 
-    /** Completed games list (historical data, changes less frequently) */
-    completed: parseInterval(
+    /** Completed games list - REQUIRED */
+    completed: parseRequiredInterval(
       process.env.NEXT_PUBLIC_POLL_GAMES_COMPLETED,
-      BASE_DEFAULTS.gamesCompleted
+      'NEXT_PUBLIC_POLL_GAMES_COMPLETED'
     ),
   },
 } as const;
@@ -185,12 +236,12 @@ export const CACHE_TIMES = {
  */
 export const STALE_TIMES = {
   game: {
-    active: POLLING_INTERVALS.game.active || 45_000,
-    waiting: POLLING_INTERVALS.game.waiting || 60_000,
+    active: POLLING_INTERVALS.game.active || 0,
+    waiting: POLLING_INTERVALS.game.waiting || 0,
   },
   games: {
-    active: POLLING_INTERVALS.games.active || 45_000,
-    completed: POLLING_INTERVALS.games.completed || 90_000,
+    active: POLLING_INTERVALS.games.active || 0,
+    completed: POLLING_INTERVALS.games.completed || 0,
   },
 } as const;
 
@@ -202,36 +253,30 @@ export const COMMON_QUERY_OPTIONS = {
   /** Stop polling when tab is hidden (saves bandwidth) */
   refetchIntervalInBackground: false,
 
-  /** Refetch when user returns to tab */
-  refetchOnWindowFocus: true,
+  /** Disable refetch on window focus - rely on polling only */
+  refetchOnWindowFocus: false,
 } as const;
 
 /**
  * Logging helper for debugging polling configuration
- * Only logs in development mode
  */
 export function logPollingConfig() {
-  if (isDevelopment) {
-    console.log('[Polling Config] Mode:', isDevelopment ? 'development' : 'production');
-    console.log('[Polling Config] Environment Variables:', {
-      POLL_GAME_COMMITS: process.env.NEXT_PUBLIC_POLL_GAME_COMMITS,
-      POLL_GAME_ACTIVE: process.env.NEXT_PUBLIC_POLL_GAME_ACTIVE,
-      POLL_GAME_WAITING: process.env.NEXT_PUBLIC_POLL_GAME_WAITING,
-    });
-    console.log('[Polling Config] Computed Intervals:', {
-      'commits.interval': POLLING_INTERVALS.commits.interval,
-      'game.active': POLLING_INTERVALS.game.active,
-      'game.waiting': POLLING_INTERVALS.game.waiting,
-    });
-    console.log('[Polling Config] Full Config:', {
-      intervals: POLLING_INTERVALS,
-      cacheTimes: CACHE_TIMES,
-      staleTimes: STALE_TIMES,
-    });
-  }
+  console.log('[Polling Config] Environment Variables:', {
+    POLL_GAME_ACTIVE: process.env.NEXT_PUBLIC_POLL_GAME_ACTIVE,
+    POLL_GAME_WAITING: process.env.NEXT_PUBLIC_POLL_GAME_WAITING,
+    POLL_GAME_COMPLETED: process.env.NEXT_PUBLIC_POLL_GAME_COMPLETED,
+    POLL_GAMES_ACTIVE: process.env.NEXT_PUBLIC_POLL_GAMES_ACTIVE,
+    POLL_GAMES_COMPLETED: process.env.NEXT_PUBLIC_POLL_GAMES_COMPLETED,
+    // Optional
+    POLL_GAME_PLAYERS: process.env.NEXT_PUBLIC_POLL_GAME_PLAYERS || '(using POLL_GAME_WAITING)',
+    POLL_GAME_COMMITS: process.env.NEXT_PUBLIC_POLL_GAME_COMMITS || '(using POLL_GAME_ACTIVE)',
+    POLL_GAME_VOTES: process.env.NEXT_PUBLIC_POLL_GAME_VOTES || '(using POLL_GAME_ACTIVE)',
+    POLL_GAME_ROUNDS: process.env.NEXT_PUBLIC_POLL_GAME_ROUNDS || '(using POLL_GAME_ACTIVE)',
+  });
+  console.log('[Polling Config] Computed Intervals:', POLLING_INTERVALS);
 }
 
-// Auto-log on import in development
-if (isDevelopment && typeof window !== 'undefined') {
+// Auto-log on import if in development
+if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
   logPollingConfig();
 }
