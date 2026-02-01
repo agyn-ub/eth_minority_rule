@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-keys';
-import { getPlayerGameDetail, PlayerGameDetail } from '@/lib/supabase';
+import { PlayerGameDetail, getBatchPlayerGameDetails } from '@/lib/supabase';
 
 /**
  * @deprecated Use useBatchPlayerGameDetails instead for better performance
@@ -18,7 +18,11 @@ export function usePlayerGameDetail(
 ) {
   return useQuery<PlayerGameDetail | null>({
     queryKey: queryKeys.players.gameDetail(playerAddress, gameId),
-    queryFn: () => getPlayerGameDetail(playerAddress, gameId),
+    queryFn: async () => {
+      // Use batch function with single game ID as workaround
+      const results = await getBatchPlayerGameDetails(playerAddress, [String(gameId)]);
+      return results.length > 0 ? results[0] : null;
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes - historical data doesn't change often
     refetchInterval: false, // Disable polling for historical game data
     refetchOnMount: false, // Don't refetch on every mount

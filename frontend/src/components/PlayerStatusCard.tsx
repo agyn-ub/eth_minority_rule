@@ -4,15 +4,16 @@ import { useMemo } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatAddress } from '@/lib/utils';
-import type { Player, Commit, Vote } from '@/lib/supabase';
+import type { GraphQLPlayer } from '@/hooks/queries/use-game-players';
+import type { GraphQLCommit, GraphQLVote } from '@/hooks/queries/use-game-votes';
 
 interface PlayerStatusCardProps {
   gameId: number;
   currentRound: number;
   gameState: string;
-  players: Player[];
-  commits: Commit[];
-  votes: Vote[];
+  players: GraphQLPlayer[];
+  commits: GraphQLCommit[];
+  votes: GraphQLVote[];
   currentUserAddress?: string;
 }
 

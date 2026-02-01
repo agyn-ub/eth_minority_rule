@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useAccount } from 'wagmi';
 import { useMyGames } from '@/hooks/queries/use-my-games';
+import { useWebSocketGameList } from '@/hooks/websocket/use-websocket-game-list';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +16,10 @@ export default function MyGamesPage() {
   const { address } = useAccount();
   const { data: games, isLoading } = useMyGames();
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Enable real-time updates via WebSocket
+  useWebSocketGameList('active');
+  useWebSocketGameList('completed');
 
   // Filter games by search query
   const filteredGames = games?.filter(game => {

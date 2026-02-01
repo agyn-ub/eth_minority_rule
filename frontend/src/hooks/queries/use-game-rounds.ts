@@ -2,9 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { graphqlRequest } from '@/lib/graphql/client';
 import { GET_GAME_ROUNDS, GET_GAME_WINNERS } from '@/lib/graphql/queries';
 import { queryKeys } from '@/lib/query-keys';
-import { POLLING_INTERVALS, COMMON_QUERY_OPTIONS } from '@/lib/polling-config';
 
-interface Round {
+export interface GraphQLRound {
   game_id: string;
   round: number;
   yes_count: number;
@@ -16,7 +15,7 @@ interface Round {
   transaction_hash: string;
 }
 
-interface Winner {
+export interface GraphQLWinner {
   game_id: string;
   player_address: string;
   prize_amount: string;
@@ -29,12 +28,9 @@ interface Winner {
 /**
  * Hook for fetching round history
  *
- * ## Smart Polling Strategy
- * - **CommitPhase/RevealPhase**: Poll (rounds can be processed)
- * - **ZeroPhase/Completed**: Stop polling (no round changes)
- *
- * Rounds only change when a round is processed, which happens
- * during active game phases.
+ * ## No Independent Polling
+ * This query relies on cache invalidation from the main useGame query.
+ * When WebSocket or useGame polling detects changes, this refetches automatically.
  */
 export function useGameRounds(
   gameId: number | string | undefined,
@@ -43,33 +39,27 @@ export function useGameRounds(
     gameState?: string;
   }
 ) {
-  // Only poll during active game phases
-  const shouldPoll = options?.gameState === 'CommitPhase' || options?.gameState === 'RevealPhase';
-
   return useQuery({
     queryKey: queryKeys.games.rounds(gameId!),
     queryFn: async () => {
-      const data = await graphqlRequest<{ roundss: { items: Round[] } }>(GET_GAME_ROUNDS, {
+      const data = await graphqlRequest<{ roundss: { items: GraphQLRound[] } }>(GET_GAME_ROUNDS, {
         gameId: String(gameId),
       });
       return data.roundss.items;
     },
     enabled: gameId !== undefined && options?.enabled !== false,
-    refetchInterval: shouldPoll ? POLLING_INTERVALS.rounds.interval : false,
+    refetchInterval: false, // No polling - relies on cache invalidation
+    refetchOnWindowFocus: true,
     placeholderData: (previousData) => previousData,
-    ...COMMON_QUERY_OPTIONS,
   });
 }
 
 /**
  * Hook for fetching game winners
  *
- * ## Smart Polling Strategy
- * - **Never polls**: Winners are static once set
- * - Loads once on page load or window focus
- *
- * Winners are only set when a game completes and never change afterward.
- * Polling wastes bandwidth since this is historical data.
+ * ## No Independent Polling
+ * Winners are static once set - they never change.
+ * Relies on cache invalidation from useGame query.
  */
 export function useGameWinners(
   gameId: number | string | undefined,
@@ -78,21 +68,17 @@ export function useGameWinners(
     gameState?: string;
   }
 ) {
-  const shouldPoll = options?.gameState === 'Completed';
-
   return useQuery({
     queryKey: queryKeys.games.winners(gameId!),
     queryFn: async () => {
-      const data = await graphqlRequest<{ winnerss: { items: Winner[] } }>(GET_GAME_WINNERS, {
+      const data = await graphqlRequest<{ winnerss: { items: GraphQLWinner[] } }>(GET_GAME_WINNERS, {
         gameId: String(gameId),
       });
       return data.winnerss.items;
     },
     enabled: gameId !== undefined && options?.enabled !== false,
-    // Never poll - winners are static historical data
-    // Will still refetch on window focus (via COMMON_QUERY_OPTIONS)
-    refetchInterval: shouldPoll ? POLLING_INTERVALS.votes.interval : false,
+    refetchInterval: false, // No polling - static historical data
+    refetchOnWindowFocus: true,
     placeholderData: (previousData) => previousData,
-    ...COMMON_QUERY_OPTIONS,
   });
 }

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { GameCard } from '@/components/GameCard';
 import { useGameLists } from '@/hooks/queries/use-games';
+import { useWebSocketGameList } from '@/hooks/websocket/use-websocket-game-list';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateGameModal } from '@/components/CreateGameModal';
@@ -30,6 +31,10 @@ export default function Home() {
     isLoadingActive,
     isLoadingCompleted,
   } = useGameLists(activePage, completedPage);
+
+  // Enable real-time updates via WebSocket
+  useWebSocketGameList('active');
+  useWebSocketGameList('completed');
 
   // Filter ongoing and new games (client-side filtering on small dataset)
   // TEMPORARILY SHOWING ALL GAMES FOR DEBUGGING

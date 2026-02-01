@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { ConnectButton } from '@/components/ConnectButton';
 import { CreateGameModal } from '@/components/CreateGameModal';
 import { NetworkWarningBanner } from '@/components/NetworkWarningBanner';
+import { WebSocketStatus } from '@/components/websocket-status';
 import Link from 'next/link';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -78,6 +79,7 @@ export default function RootLayout({
                     }
                   />
                   <ConnectButton />
+                  <WebSocketStatus />
                 </nav>
               </div>
             </header>

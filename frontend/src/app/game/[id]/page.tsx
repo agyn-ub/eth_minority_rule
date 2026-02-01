@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAccount } from 'wagmi';
 import { useGameDetail } from '@/hooks/queries/use-game';
+import { useWebSocketGame } from '@/hooks/websocket/use-websocket-game';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { VoteCommitForm } from '@/components/VoteCommitForm';
 import { VoteRevealForm } from '@/components/VoteRevealForm';
@@ -35,6 +36,9 @@ export default function GamePage() {
     isLoadingCommits,
     isLoadingPlayers,
   } = useGameDetail(gameId);
+
+  // Enable real-time updates via WebSocket
+  useWebSocketGame(gameId.toString());
 
   // Check if current user is the game creator
   const isCreator = address && game?.creator_address
@@ -414,7 +418,7 @@ export default function GamePage() {
           <CardContent>
             <div className="space-y-2">
               {currentRoundVotes.map((vote) => (
-                <div key={vote.id} className="flex items-center justify-between py-2 border-b">
+                <div key={`${vote.game_id}-${vote.round}-${vote.player_address}`} className="flex items-center justify-between py-2 border-b">
                   <Link
                     href={`/player/${vote.player_address}`}
                     className="font-mono text-sm hover:text-primary transition-colors underline decoration-dotted"
@@ -444,7 +448,7 @@ export default function GamePage() {
           <CardContent>
             <div className="space-y-4">
               {rounds.map((round) => (
-                <div key={round.id} className="border-l-4 border-primary pl-4">
+                <div key={`${round.game_id}-${round.round}`} className="border-l-4 border-primary pl-4">
                   <h4 className="font-semibold">Round {round.round}</h4>
                   <p className="text-sm text-muted-foreground">
                     YES: {round.yes_count} • NO: {round.no_count}
@@ -469,7 +473,7 @@ export default function GamePage() {
           <CardContent>
             <div className="space-y-2">
               {winners.map((winner) => (
-                <div key={winner.id} className="flex items-center justify-between py-2 border-b">
+                <div key={`${winner.game_id}-${winner.player_address}`} className="flex items-center justify-between py-2 border-b">
                   <Link
                     href={`/player/${winner.player_address}`}
                     className="font-mono text-sm hover:text-primary transition-colors underline decoration-dotted"
