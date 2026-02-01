@@ -1,16 +1,31 @@
 import { useQuery } from '@tanstack/react-query';
 import { getGame, type Game } from '@/lib/supabase';
 import { queryKeys } from '@/lib/query-keys';
+import { POLLING_INTERVALS, COMMON_QUERY_OPTIONS } from '@/lib/polling-config';
 import { useGamePlayers } from './use-game-players';
 import { useGameVotes, useGameCommits } from './use-game-votes';
 import { useGameRounds, useGameWinners } from './use-game-rounds';
 
 /**
- * Hook for fetching a single game
- * Adaptive polling based on game state:
- * - Active games (CommitPhase/RevealPhase): 2 seconds (critical)
- * - Waiting states (ZeroPhase): 5 seconds (less urgent)
- * - Completed: 30 seconds (historical)
+ * Hook for fetching a single game with adaptive polling
+ *
+ * ## Polling Strategy
+ * Automatically adjusts polling frequency based on game state:
+ * - **Active phases** (CommitPhase/RevealPhase): Fastest polling for critical updates
+ * - **Waiting phase** (ZeroPhase): Moderate polling while waiting for players
+ * - **Completed**: No polling (game is finished, data won't change)
+ *
+ * ## Supporting Queries
+ * Related queries (players, votes, commits, rounds, winners) don't poll independently.
+ * They rely on this primary query's cache invalidation and window focus refetch.
+ * This prevents redundant network requests while keeping data fresh.
+ *
+ * ## Configuration
+ * Polling intervals can be customized via environment variables.
+ * See src/lib/polling-config.ts for details.
+ *
+ * @param gameId - The game ID to fetch
+ * @param options - Optional query configuration
  */
 export function useGame(gameId: number | string | undefined, options?: {
   enabled?: boolean;
@@ -21,24 +36,30 @@ export function useGame(gameId: number | string | undefined, options?: {
     enabled: gameId !== undefined && options?.enabled !== false,
     refetchInterval: (query) => {
       const game = query.state.data as Game | null;
-      if (!game) return false; // Don't poll if no data
+      if (!game) return false; // Don't poll if no data yet
 
-      // Adaptive polling based on game state (reduced from previous aggressive intervals)
+      // Adaptive polling based on game state
       switch (game.state) {
         case 'CommitPhase':
         case 'RevealPhase':
-          return 45_000; // 45 seconds
+          // Most critical - players are actively voting
+          return POLLING_INTERVALS.game.active;
+
         case 'ZeroPhase':
-          return 60_000; // 60 seconds
+          // Less urgent - waiting for players to join
+          return POLLING_INTERVALS.game.waiting;
+
         case 'Completed':
-          return false; // No polling for completed games
+          // No polling needed - game is finished
+          return POLLING_INTERVALS.game.completed;
+
         default:
-          return 60_000; // Default fallback
+          // Fallback for unknown states
+          return POLLING_INTERVALS.game.waiting;
       }
     },
-    refetchIntervalInBackground: false, // Stop polling when tab is hidden
-    refetchOnWindowFocus: true, // Refresh when user returns
     placeholderData: (previousData) => previousData,
+    ...COMMON_QUERY_OPTIONS,
   });
 }
 
@@ -50,7 +71,9 @@ export function useGame(gameId: number | string | undefined, options?: {
  */
 export function useGameDetail(gameId: number | string | undefined) {
   const gameQuery = useGame(gameId);
-  const playersQuery = useGamePlayers(gameId);
+  const playersQuery = useGamePlayers(gameId, {
+    gameState: gameQuery.data?.state,
+  });
   const votesQuery = useGameVotes(gameId, undefined, {
     gameState: gameQuery.data?.state,
     currentRound: gameQuery.data?.current_round,
@@ -59,8 +82,12 @@ export function useGameDetail(gameId: number | string | undefined) {
     gameState: gameQuery.data?.state,
     currentRound: gameQuery.data?.current_round,
   });
-  const roundsQuery = useGameRounds(gameId);
-  const winnersQuery = useGameWinners(gameId);
+  const roundsQuery = useGameRounds(gameId, {
+    gameState: gameQuery.data?.state,
+  });
+  const winnersQuery = useGameWinners(gameId, {
+    gameState: gameQuery.data?.state,
+  });
 
   return {
     // Data

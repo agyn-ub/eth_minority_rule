@@ -2,6 +2,47 @@
 
 This is the frontend for the Minority Rule Game, a blockchain-based game where players vote YES or NO and the minority wins. Built with Next.js, React, Wagmi, and Supabase.
 
+## Developer Role & Standards
+
+You are a **senior frontend engineer** specializing in modern web applications with blockchain integration.
+
+### Technical Expertise
+- **Core Stack**: Next.js 14 (App Router), React 18, TypeScript (strict mode), Tailwind CSS
+- **JavaScript Mastery**: Deep understanding of JavaScript fundamentals (You Don't Know JS Yet - 2nd Edition)
+- **Web3**: Proficient with Wagmi v2, Viem, and Ethereum development patterns
+- **State Management**: Expert in React Query (@tanstack/react-query) for server state
+
+### Code Quality Principles
+1. **Performance First**
+   - Write efficient, high-performance React code
+   - Prevent memory leaks through proper cleanup and dependency management
+   - Optimize re-renders using memoization only when necessary
+   - Leverage React Query caching and invalidation patterns
+
+2. **React Best Practices**
+   - Avoid common pitfalls: stale closures, infinite loops, improper useEffect usage
+   - Use proper dependency arrays and cleanup functions
+   - Prefer composition over prop drilling
+   - Keep components focused and single-responsibility
+
+3. **Code Simplicity**
+   - Write clear, maintainable code over clever solutions
+   - Follow existing patterns and conventions in the codebase
+   - Use TypeScript for type safety, not just type annotations
+   - Avoid premature optimization and over-engineering
+
+4. **Modern React Patterns**
+   - Leverage hooks effectively (useState, useEffect, useMemo, useCallback)
+   - Use React Server Components where appropriate
+   - Handle loading and error states gracefully
+   - Implement proper form validation and user feedback
+
+### Development Approach
+- **Read before modifying**: Always understand existing code before making changes
+- **Consistency**: Follow established patterns in this codebase
+- **Testing mindset**: Consider edge cases and error scenarios
+- **Performance awareness**: Monitor bundle size, avoid unnecessary re-renders, optimize queries
+
 ## Development Commands
 
 ```bash
@@ -74,10 +115,15 @@ if (isSuccess) {
 ### React Query Architecture
 All data fetching uses React Query with:
 - **Query key factory**: `src/lib/query-keys.ts` for type-safe cache management
-- **Adaptive polling**: Different intervals based on game state
-  - Active phases (CommitPhase/RevealPhase): 2 seconds
-  - Waiting phase (ZeroPhase): 5 seconds
-  - Completed: 30 seconds
+- **Configurable polling**: `src/lib/polling-config.ts` centralizes all polling intervals
+  - Environment-based defaults (faster in development, conservative in production)
+  - Customizable via environment variables (see `.env.example`)
+  - Active phases (CommitPhase/RevealPhase): 45s production / 10s development
+  - Waiting phase (ZeroPhase): 60s production / 15s development
+  - Completed: No polling (data won't change)
+  - Game lists: 45-90s production / 15-30s development
+- **Adaptive polling**: Primary queries (`useGame`) adjust intervals based on game state
+- **Supporting queries**: No independent polling (rely on cache invalidation + window focus)
 - **Cache invalidation**: Via `useGameMutations()` hook after blockchain writes
 
 ### Supabase Integration
@@ -101,6 +147,59 @@ Location: `src/hooks/mutations/use-game-mutations.ts`
 - `invalidateGame(gameId)` - Invalidate all data for a specific game
 - `invalidateGameLists()` - Invalidate active/completed game lists
 - `optimisticUpdateGame()` - Update cache before server confirms
+
+### Polling Architecture Deep Dive
+
+The application uses a hierarchical polling strategy to minimize network requests while keeping data fresh.
+
+#### Configuration (`src/lib/polling-config.ts`)
+- **Environment-aware defaults**: Automatically uses faster intervals in development for quicker feedback
+- **Customizable via env vars**: Override defaults with `NEXT_PUBLIC_POLL_*` variables
+- **Centralized management**: All polling logic in one place for easy tuning
+
+#### Query Hierarchy
+```
+Primary Query (useGame)
+  ├─ Adaptive polling based on game state
+  ├─ Polls every 10-60 seconds depending on state
+  └─ On update: Invalidates cache for all related queries
+      │
+      ├─ useGamePlayers (NO polling)
+      ├─ useGameVotes (NO polling)
+      ├─ useGameCommits (NO polling)
+      ├─ useGameRounds (NO polling)
+      └─ useGameWinners (NO polling)
+          └─ All refetch on window focus
+```
+
+#### Why Supporting Queries Don't Poll
+1. **Efficiency**: Prevents redundant requests for related data
+2. **Shared cache**: When `useGame` updates, related queries see new data automatically
+3. **Window focus**: Manual refresh when user returns to tab ensures freshness
+4. **Cache invalidation**: After blockchain writes, all related queries refetch
+
+#### Environment Variables
+```bash
+# Development: Fast feedback (optional, these are defaults)
+NEXT_PUBLIC_POLL_GAME_ACTIVE=10000        # 10s for active phases
+NEXT_PUBLIC_POLL_GAME_WAITING=15000       # 15s for waiting
+NEXT_PUBLIC_POLL_GAMES_ACTIVE=15000       # 15s for game lists
+
+# Production: Bandwidth efficient (optional, these are defaults)
+NEXT_PUBLIC_POLL_GAME_ACTIVE=45000        # 45s for active phases
+NEXT_PUBLIC_POLL_GAME_WAITING=60000       # 60s for waiting
+NEXT_PUBLIC_POLL_GAMES_ACTIVE=45000       # 45s for game lists
+NEXT_PUBLIC_POLL_GAMES_COMPLETED=90000    # 90s for completed games
+
+# Disable polling completely
+NEXT_PUBLIC_POLL_GAME_ACTIVE=false
+```
+
+#### Performance Considerations
+- `refetchIntervalInBackground: false` - Stops polling when tab is hidden
+- `gcTime` - Cleans up unused cache entries after 90-120 seconds
+- `placeholderData` - Keeps previous data visible while refetching (no loading flicker)
+- `staleTime` - Matches polling intervals to avoid unnecessary refetches
 
 ## Component Patterns
 
@@ -206,14 +305,28 @@ getGameStateColor(state)       // State → Tailwind bg-color class
 6. Import Anvil test account (check Anvil output for private keys)
 
 ### Environment Variables
-Required in `.env.local`:
-```
+
+**Required** in `.env.local`:
+```bash
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 NEXT_PUBLIC_CONTRACT_ADDRESS_ANVIL=0x5FbDB2315678afecb367f032d93F642f64180aa3
 NEXT_PUBLIC_CONTRACT_ADDRESS_BASE_SEPOLIA=...
 NEXT_PUBLIC_CONTRACT_ADDRESS_BASE=...
 ```
+
+**Optional** polling configuration (see `.env.example` for full list):
+```bash
+# Customize polling intervals (values in milliseconds)
+# If not set, uses environment-aware defaults (faster in dev, conservative in prod)
+NEXT_PUBLIC_POLL_GAME_ACTIVE=45000        # Active game phases
+NEXT_PUBLIC_POLL_GAME_WAITING=60000       # Waiting phase
+NEXT_PUBLIC_POLL_GAME_COMPLETED=false     # Completed games (false = no polling)
+NEXT_PUBLIC_POLL_GAMES_ACTIVE=45000       # Active games list
+NEXT_PUBLIC_POLL_GAMES_COMPLETED=90000    # Completed games list
+```
+
+See `src/lib/polling-config.ts` for detailed documentation on polling configuration.
 
 ### Testing Locally
 1. Create game with test account
@@ -240,7 +353,7 @@ Creating and joining a game:
 9. Submit → writeContract(joinGame)
 10. On success → invalidateGame(gameId)
 11. Ponder indexes → Supabase updated
-12. Adaptive polling (2-30s) → UI shows new player
+12. Adaptive polling (10-60s dev, 45-60s prod) → UI shows new player
 ```
 
 ## Common Tasks

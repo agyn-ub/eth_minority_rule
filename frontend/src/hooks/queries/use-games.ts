@@ -2,6 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import { graphqlRequest } from '@/lib/graphql/client';
 import { GET_ACTIVE_GAMES, GET_COMPLETED_GAMES } from '@/lib/graphql/queries';
 import { queryKeys } from '@/lib/query-keys';
+import {
+  POLLING_INTERVALS,
+  COMMON_QUERY_OPTIONS,
+  STALE_TIMES,
+  CACHE_TIMES,
+} from '@/lib/polling-config';
 
 // GraphQL response types (will be auto-generated later with codegen)
 interface GameItem {
@@ -35,8 +41,16 @@ interface GamesResponse {
 
 /**
  * Hook for fetching active games with pagination via Ponder GraphQL
- * Uses cursor-based pagination (not offset-based)
- * Refetches on window focus and manual refresh (no auto-polling)
+ *
+ * ## Polling Strategy
+ * Uses fixed-interval polling to keep the active games list fresh.
+ * Polling can be customized via NEXT_PUBLIC_POLL_GAMES_ACTIVE env var.
+ *
+ * ## Cursor Pagination
+ * Uses cursor-based pagination (not offset-based).
+ * TODO: Properly track cursors for efficient page navigation.
+ *
+ * @param page - Page number (1-based)
  */
 export function useActiveGames(page = 1) {
   return useQuery({
@@ -60,20 +74,26 @@ export function useActiveGames(page = 1) {
         endCursor: data.gamess.pageInfo.endCursor,
       };
     },
-    // Auto-polling every 45 seconds for game updates
-    refetchInterval: 45_000, // Poll every 45 seconds
-    refetchIntervalInBackground: false, // Stop polling when tab is hidden (saves bandwidth)
-    refetchOnWindowFocus: true, // Refetch when returning to tab
-    staleTime: 45_000, // Match polling interval
-    gcTime: 90_000, // Clean up old cache after 90 seconds (prevents memory leak)
+    refetchInterval: POLLING_INTERVALS.games.active,
+    staleTime: STALE_TIMES.games.active,
+    gcTime: CACHE_TIMES.standard,
     placeholderData: (previousData) => previousData,
+    ...COMMON_QUERY_OPTIONS,
   });
 }
 
 /**
  * Hook for fetching completed games with pagination via Ponder GraphQL
- * Uses cursor-based pagination (not offset-based)
- * Polls every 30 seconds (historical data changes less frequently)
+ *
+ * ## Polling Strategy
+ * Polls at a slower rate than active games since historical data changes
+ * less frequently. Customizable via NEXT_PUBLIC_POLL_GAMES_COMPLETED env var.
+ *
+ * ## Cursor Pagination
+ * Uses cursor-based pagination (not offset-based).
+ * TODO: Properly track cursors for efficient page navigation.
+ *
+ * @param page - Page number (1-based)
  */
 export function useCompletedGames(page = 1) {
   return useQuery({
@@ -96,13 +116,11 @@ export function useCompletedGames(page = 1) {
         endCursor: data.gamess.pageInfo.endCursor,
       };
     },
-    // Completed games change less frequently - poll every 90 seconds
-    refetchInterval: 90_000,
-    refetchIntervalInBackground: false, // Stop polling when tab is hidden
-    refetchOnWindowFocus: true,
-    staleTime: 90_000,
-    gcTime: 120_000, // Clean up old cache after 2 minutes
+    refetchInterval: POLLING_INTERVALS.games.completed,
+    staleTime: STALE_TIMES.games.completed,
+    gcTime: CACHE_TIMES.extended,
     placeholderData: (previousData) => previousData,
+    ...COMMON_QUERY_OPTIONS,
   });
 }
 

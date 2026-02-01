@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getContractAddress, MinorityRuleGameAbi } from '@/lib/contracts';
 import { useToast } from '@/hooks/use-toast';
-import { useGameMutations } from '@/hooks/mutations/use-game-mutations';
 
 interface ProcessRoundFormProps {
   gameId: number;
@@ -15,21 +14,20 @@ interface ProcessRoundFormProps {
 export function ProcessRoundForm({ gameId }: ProcessRoundFormProps) {
   const { chainId } = useAccount();
   const { toast } = useToast();
-  const { invalidateGame } = useGameMutations();
 
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
-  // Invalidate game data on success
+  // Show success toast when transaction confirms
+  // Let polling naturally update the UI
   useEffect(() => {
     if (isSuccess) {
-      invalidateGame(gameId);
       toast({
-        title: 'Round Processed',
-        description: 'The round has been completed. Check the results below.',
+        title: 'Round Processed Successfully!',
+        description: 'The game will update shortly with the round results once indexed.',
       });
     }
-  }, [isSuccess, gameId, invalidateGame, toast]);
+  }, [isSuccess, toast]);
 
   const handleProcessRound = async () => {
     if (!chainId) {

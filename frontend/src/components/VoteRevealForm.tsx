@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getContractAddress, MinorityRuleGameAbi } from '@/lib/contracts';
 import { useToast } from '@/hooks/use-toast';
-import { useGameMutations } from '@/hooks/mutations/use-game-mutations';
 import { AlertCircle } from 'lucide-react';
 
 interface VoteRevealFormProps {
@@ -27,7 +26,6 @@ interface StoredVote {
 export function VoteRevealForm({ gameId, currentRound }: VoteRevealFormProps) {
   const { address, chainId } = useAccount();
   const { toast } = useToast();
-  const { invalidateGame } = useGameMutations();
   const [storedVote, setStoredVote] = useState<StoredVote | null>(null);
   const [manualVote, setManualVote] = useState<boolean | null>(null);
   const [manualSalt, setManualSalt] = useState<string>('');
@@ -36,12 +34,16 @@ export function VoteRevealForm({ gameId, currentRound }: VoteRevealFormProps) {
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
-  // Invalidate cache when transaction confirms
+  // Show success toast when transaction confirms
+  // Let polling naturally update the UI
   useEffect(() => {
     if (isSuccess) {
-      invalidateGame(gameId);
+      toast({
+        title: 'Vote Revealed Successfully!',
+        description: 'Your vote will appear in the game shortly once indexed.',
+      });
     }
-  }, [isSuccess, gameId, invalidateGame]);
+  }, [isSuccess, toast]);
 
   useEffect(() => {
     if (!address) return;

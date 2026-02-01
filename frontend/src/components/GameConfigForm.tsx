@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getContractAddress, MinorityRuleGameAbi } from '@/lib/contracts';
 import { useToast } from '@/hooks/use-toast';
-import { useGameMutations } from '@/hooks/mutations/use-game-mutations';
 
 interface GameConfigFormProps {
   gameId: number;
@@ -18,7 +17,6 @@ interface GameConfigFormProps {
 export function GameConfigForm({ gameId, currentState }: GameConfigFormProps) {
   const { address, chainId } = useAccount();
   const { toast } = useToast();
-  const { invalidateGame } = useGameMutations();
 
   const [commitDuration, setCommitDuration] = useState<string>('300'); // 5 minutes default
   const [revealDuration, setRevealDuration] = useState<string>('180'); // 3 minutes default
@@ -26,16 +24,16 @@ export function GameConfigForm({ gameId, currentState }: GameConfigFormProps) {
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
+  // Show success toast when transaction confirms
+  // Let polling naturally update the UI
   useEffect(() => {
     if (isSuccess) {
-      invalidateGame(gameId);
       toast({
-        title: 'Success',
-        description: 'Deadline set successfully!',
+        title: 'Deadline Set Successfully!',
+        description: 'The game will update shortly once the blockchain event is indexed.',
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSuccess, gameId]);
+  }, [isSuccess, toast]);
 
   const handleSetCommitDeadline = async () => {
     if (!chainId) {

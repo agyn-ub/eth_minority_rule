@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getContractAddress, MinorityRuleGameAbi } from '@/lib/contracts';
 import { useToast } from '@/hooks/use-toast';
-import { useGameMutations } from '@/hooks/mutations/use-game-mutations';
 import { AlertCircle, Info } from 'lucide-react';
 
 interface VoteData {
@@ -28,14 +27,14 @@ interface VoteCommitFormProps {
 export function VoteCommitForm({ gameId, currentRound }: VoteCommitFormProps) {
   const { address, chainId } = useAccount();
   const { toast } = useToast();
-  const { invalidateGame } = useGameMutations();
   const [selectedVote, setSelectedVote] = useState<boolean | null>(null);
   const [committedVoteData, setCommittedVoteData] = useState<VoteData | null>(null);
 
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
-  // Load committed vote data and invalidate cache when transaction confirms
+  // Load committed vote data when transaction confirms
+  // Let polling naturally update the UI (no cache invalidation needed)
   useEffect(() => {
     if (isSuccess && address) {
       const storageKey = `vote_salt_${gameId}_${currentRound}_${address}`;
@@ -43,9 +42,12 @@ export function VoteCommitForm({ gameId, currentRound }: VoteCommitFormProps) {
       if (data) {
         setCommittedVoteData(JSON.parse(data));
       }
-      invalidateGame(gameId);
+      toast({
+        title: 'Vote Committed Successfully!',
+        description: 'Your vote will appear in the game shortly once indexed.',
+      });
     }
-  }, [isSuccess, gameId, currentRound, address, invalidateGame]);
+  }, [isSuccess, gameId, currentRound, address, toast]);
 
   const handleSubmitCommit = async () => {
     if (selectedVote === null || !chainId) {

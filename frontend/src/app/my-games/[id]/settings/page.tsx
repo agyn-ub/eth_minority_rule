@@ -3,9 +3,8 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAccount } from 'wagmi';
-import { useQuery } from '@tanstack/react-query';
 import { useGame } from '@/hooks/queries/use-game';
-import { getGameCommitCount } from '@/lib/supabase';
+import { useGameCommits } from '@/hooks/queries/use-game-votes';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { InlineDeadlineForm } from '@/components/InlineDeadlineForm';
@@ -17,13 +16,10 @@ export default function GameSettingsPage({ params }: { params: { id: string } })
   const router = useRouter();
   const { address } = useAccount();
   const { data: game, isLoading } = useGame(params.id);
-
-  // Fetch commit count
-  const { data: commitCount, isLoading: isLoadingCommits } = useQuery({
-    queryKey: ['commits-count', params.id],
-    queryFn: () => getGameCommitCount(params.id),
-    refetchInterval: 5000,
+  const { data: commits, isLoading: isLoadingCommits } = useGameCommits(params.id, game?.current_round, {
+    gameState: game?.state,
   });
+  const commitCount = commits?.length ?? 0;
 
   // Redirect if not the creator
   useEffect(() => {
@@ -273,20 +269,20 @@ export default function GameSettingsPage({ params }: { params: { id: string } })
           Date.now() > Number(game.commit_deadline) * 1000 &&
           !game.reveal_deadline &&
           commitCount === 0 && (
-          <Card className="border-amber-500/50 bg-amber-500/10">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <AlertCircle className="w-6 h-6 text-amber-500" />
-                <div>
-                  <h4 className="font-bold text-amber-500">No Commits Received</h4>
-                  <p className="text-sm text-muted-foreground">
-                    No players committed votes. You can still set a reveal deadline, but there will be no votes to reveal.
-                  </p>
+            <Card className="border-amber-500/50 bg-amber-500/10">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="w-6 h-6 text-amber-500" />
+                  <div>
+                    <h4 className="font-bold text-amber-500">No Commits Received</h4>
+                    <p className="text-sm text-muted-foreground">
+                      No players committed votes. You can still set a reveal deadline, but there will be no votes to reveal.
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+              </CardContent>
+            </Card>
+          )}
 
         <InlineDeadlineForm game={game} />
 

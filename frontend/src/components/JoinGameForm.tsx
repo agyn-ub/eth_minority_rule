@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getContractAddress, MinorityRuleGameAbi } from '@/lib/contracts';
 import { useToast } from '@/hooks/use-toast';
-import { useGameMutations } from '@/hooks/mutations/use-game-mutations';
 import { formatWei } from '@/lib/utils';
 
 interface JoinGameFormProps {
@@ -17,18 +16,20 @@ interface JoinGameFormProps {
 export function JoinGameForm({ gameId, entryFee }: JoinGameFormProps) {
   const { address, chainId } = useAccount();
   const { toast } = useToast();
-  const { invalidateGame } = useGameMutations();
 
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
-  // Invalidate cache when transaction confirms
+  // Show success toast when transaction confirms
+  // Let polling naturally update the UI
   useEffect(() => {
     if (isSuccess) {
-      invalidateGame(gameId);
+      toast({
+        title: 'Joined Game Successfully!',
+        description: 'You will appear in the player list shortly once indexed.',
+      });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSuccess, gameId]);
+  }, [isSuccess, toast]);
 
   const handleJoinGame = async () => {
     if (!chainId) {
