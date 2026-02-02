@@ -13,7 +13,7 @@ import { GameCardSkeletonGrid } from '@/components/GameCardSkeleton';
 
 export default function Home() {
   // Tab and pagination state
-  const [activeTab, setActiveTab] = useState('ongoing');
+  const [activeTab, setActiveTab] = useState('new');
 
   // Separate page state for each tab
   const [activePage, setActivePage] = useState(1);
