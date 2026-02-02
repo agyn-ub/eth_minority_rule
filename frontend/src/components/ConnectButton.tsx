@@ -89,9 +89,25 @@ export function ConnectButton() {
     );
   }
 
+  const handleConnect = async () => {
+    // Workaround for Chrome extension DataCloneError
+    // Directly request accounts from MetaMask, then Wagmi will sync
+    if (typeof window !== 'undefined' && window.ethereum) {
+      try {
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        // Give Wagmi a moment to detect the connection
+        setTimeout(() => {
+          connect({ connector: connectors[0] });
+        }, 100);
+      } catch (error) {
+        console.error('MetaMask connection error:', error);
+      }
+    }
+  };
+
   return (
     <Button
-      onClick={() => connect({ connector: connectors[0] })}
+      onClick={handleConnect}
       variant="default"
     >
       Connect MetaMask

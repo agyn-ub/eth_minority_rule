@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAccount } from 'wagmi';
 import { useGame } from '@/hooks/queries/use-game';
 import { useGameCommits } from '@/hooks/queries/use-game-votes';
+import { useWebSocketGame } from '@/hooks/websocket/use-websocket-game';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { InlineDeadlineForm } from '@/components/InlineDeadlineForm';
@@ -20,6 +21,9 @@ export default function GameSettingsPage({ params }: { params: { id: string } })
     gameState: game?.state,
   });
   const commitCount = commits?.length ?? 0;
+
+  // Subscribe to WebSocket updates for this game
+  useWebSocketGame(params.id);
 
   // Redirect if not the creator
   useEffect(() => {

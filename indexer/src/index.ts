@@ -179,7 +179,7 @@ ponder.on("MinorityRuleGame:CommitPhaseStarted", async ({ event, context }) => {
   // Notify WebSocket server
   await notifyWebSocket('CommitPhaseStarted', event.args.gameId, {
     round: event.args.round,
-    deadline: event.args.deadline,
+    deadline: event.args.deadline.toString(),
   });
 });
 
@@ -210,7 +210,7 @@ ponder.on("MinorityRuleGame:RevealPhaseStarted", async ({ event, context }) => {
   // Notify WebSocket server
   await notifyWebSocket('RevealPhaseStarted', event.args.gameId, {
     round: event.args.round,
-    deadline: event.args.deadline,
+    deadline: event.args.deadline.toString(),
   });
 });
 

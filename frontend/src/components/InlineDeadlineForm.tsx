@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getContractAddress, MinorityRuleGameAbi } from '@/lib/contracts';
 import { useToast } from '@/hooks/use-toast';
-import { Check } from 'lucide-react';
 import type { Game } from '@/lib/supabase';
 
 interface InlineDeadlineFormProps {
@@ -33,15 +32,26 @@ export function InlineDeadlineForm({ game }: InlineDeadlineFormProps) {
     Date.now() > Number(game.commit_deadline) * 1000;
 
   // Show success toast when transaction confirms
-  // Let adaptive polling (45-60s) naturally update the UI
   useEffect(() => {
     if (isSuccess) {
       toast({
-        title: 'Deadline Set Successfully!',
-        description: 'The game will update shortly once the blockchain event is indexed.',
+        title: 'Transaction confirmed',
+        description: 'Waiting for indexer to process the event...',
       });
     }
   }, [isSuccess, toast]);
+
+  // Reset transaction state when game state changes
+  // This allows form to reappear for setting reveal deadline
+  useEffect(() => {
+    if (isSuccess && game.state !== 'ZeroPhase') {
+      // Give a moment for WebSocket to show success toast
+      const timer = setTimeout(() => {
+        reset();
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [game.state, isSuccess, reset]);
 
   // Handle transaction errors
   useEffect(() => {
@@ -151,8 +161,8 @@ export function InlineDeadlineForm({ game }: InlineDeadlineFormProps) {
     }
   };
 
-  // Don't show anything if no deadline can be set
-  if (!canSetCommitDeadline && !canSetRevealDeadline) {
+  // Don't show anything if no deadline can be set OR transaction succeeded
+  if ((!canSetCommitDeadline && !canSetRevealDeadline) || isSuccess) {
     return null;
   }
 
@@ -167,27 +177,6 @@ export function InlineDeadlineForm({ game }: InlineDeadlineFormProps) {
               {isPending && 'Please confirm in MetaMask'}
               {isConfirming && 'Waiting for blockchain confirmation...'}
             </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Success state - persists until polling updates the game state
-  if (isSuccess) {
-    return (
-      <Card className="border-success/50 bg-success/10">
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-success flex items-center justify-center">
-              <Check className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h4 className="font-bold text-success">Deadline set successfully!</h4>
-              <p className="text-sm text-muted-foreground">
-                The game will update within the next minute as the blockchain event is indexed.
-              </p>
-            </div>
           </div>
         </CardContent>
       </Card>
