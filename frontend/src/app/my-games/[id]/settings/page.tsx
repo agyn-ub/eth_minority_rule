@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useAccount } from 'wagmi';
 import { useQuery } from '@tanstack/react-query';
 import { useGame } from '@/hooks/queries/use-game';
@@ -13,24 +13,26 @@ import Link from 'next/link';
 import { formatWei } from '@/lib/utils';
 import { ArrowLeft, Clock, Check, Users, AlertCircle } from 'lucide-react';
 
-export default function GameSettingsPage({ params }: { params: { id: string } }) {
+export default function GameSettingsPage() {
   const router = useRouter();
+  const params = useParams();
+  const gameId = params.id as string;
   const { address } = useAccount();
-  const { data: game, isLoading } = useGame(params.id);
+  const { data: game, isLoading } = useGame(gameId);
 
   // Fetch commit count
   const { data: commitCount, isLoading: isLoadingCommits } = useQuery({
-    queryKey: ['commits-count', params.id],
-    queryFn: () => getGameCommitCount(params.id),
+    queryKey: ['commits-count', gameId],
+    queryFn: () => getGameCommitCount(gameId),
     refetchInterval: 5000,
   });
 
   // Redirect if not the creator
   useEffect(() => {
     if (game && address && game.creator_address.toLowerCase() !== address.toLowerCase()) {
-      router.push(`/game/${params.id}`);
+      router.push(`/game/${gameId}`);
     }
-  }, [game, address, router, params.id]);
+  }, [game, address, router, gameId]);
 
   // Loading state
   if (isLoading) {
