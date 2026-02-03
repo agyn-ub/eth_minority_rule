@@ -12,6 +12,7 @@ import { JoinGameForm } from '@/components/JoinGameForm';
 import { TimerProgress } from '@/components/TimerProgress';
 import { ProcessRoundForm } from '@/components/ProcessRoundForm';
 import { PlayerStatusCard } from '@/components/PlayerStatusCard';
+import { EliminatedPlayersCard } from '@/components/EliminatedPlayersCard';
 import { formatWei, formatAddress, getGameStateLabel, getTimeRemaining } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -32,6 +33,7 @@ export default function GamePage() {
     commits,
     rounds,
     winners,
+    eliminations,
     isLoading,
     isLoadingCommits,
     isLoadingPlayers,
@@ -462,6 +464,14 @@ export default function GamePage() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {eliminations.length > 0 && (
+        <EliminatedPlayersCard
+          eliminations={eliminations}
+          currentUserAddress={address}
+          gameState={game.state}
+        />
       )}
 
       {winners.length > 0 && (

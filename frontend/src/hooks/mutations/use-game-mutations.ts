@@ -18,6 +18,7 @@ export function useGameMutations() {
         queryClient.invalidateQueries({ queryKey: queryKeys.games.commits(gameId) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.games.rounds(gameId) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.games.winners(gameId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.games.eliminations(gameId) }),
       ]);
     },
     [queryClient]

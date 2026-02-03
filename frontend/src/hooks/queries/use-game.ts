@@ -6,6 +6,7 @@ import { POLLING_INTERVALS, COMMON_QUERY_OPTIONS } from '@/lib/polling-config';
 import { useGamePlayers } from './use-game-players';
 import { useGameVotes, useGameCommits } from './use-game-votes';
 import { useGameRounds, useGameWinners } from './use-game-rounds';
+import { useGameEliminations } from './use-game-eliminations';
 
 export interface Game {
   game_id: string;
@@ -111,6 +112,9 @@ export function useGameDetail(gameId: number | string | undefined) {
   const winnersQuery = useGameWinners(gameId, {
     gameState: gameQuery.data?.state,
   });
+  const eliminationsQuery = useGameEliminations(gameId, {
+    gameState: gameQuery.data?.state,
+  });
 
   return {
     // Data
@@ -120,6 +124,7 @@ export function useGameDetail(gameId: number | string | undefined) {
     commits: commitsQuery.data ?? [],
     rounds: roundsQuery.data ?? [],
     winners: winnersQuery.data ?? [],
+    eliminations: eliminationsQuery.data ?? [],
 
     // States
     isLoading: gameQuery.isLoading,
@@ -131,6 +136,7 @@ export function useGameDetail(gameId: number | string | undefined) {
     isLoadingPlayers: playersQuery.isLoading,
     isLoadingVotes: votesQuery.isLoading,
     isLoadingCommits: commitsQuery.isLoading,
+    isLoadingEliminations: eliminationsQuery.isLoading,
 
     // Refetch all
     refetch: () => {
@@ -140,6 +146,7 @@ export function useGameDetail(gameId: number | string | undefined) {
       commitsQuery.refetch();
       roundsQuery.refetch();
       winnersQuery.refetch();
+      eliminationsQuery.refetch();
     },
   };
 }
