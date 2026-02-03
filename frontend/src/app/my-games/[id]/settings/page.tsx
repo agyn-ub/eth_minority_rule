@@ -16,7 +16,7 @@ import { ArrowLeft, Clock, Check, Users, AlertCircle } from 'lucide-react';
 export default function GameSettingsPage() {
   const router = useRouter();
   const params = useParams();
-  const gameId = gameId as string;
+  const gameId = params.id as string;
   const { address } = useAccount();
   const [currentTime, setCurrentTime] = useState<number>(Math.floor(Date.now() / 1000));
   const { data: game, isLoading } = useGame(gameId);
