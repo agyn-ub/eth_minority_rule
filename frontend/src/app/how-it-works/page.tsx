@@ -264,10 +264,16 @@ export default function HowItWorksPage() {
               </div>
               <div>
                 <p className="text-base font-bold mb-1">Survive or Eliminate</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground mb-2">
                   After all votes are revealed, the minority survives and advances to the next round.
                   The majority is eliminated and loses their entry fee.
                 </p>
+                <div className="p-3 bg-primary/10 rounded border border-primary/30">
+                  <p className="text-xs font-bold text-primary mb-1">⚖️ TIE BREAKER</p>
+                  <p className="text-xs text-muted-foreground">
+                    If YES and NO votes are equal, <span className="font-bold text-foreground">YES advances</span> to the next round.
+                  </p>
+                </div>
               </div>
             </div>
 
