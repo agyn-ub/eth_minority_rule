@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAccount } from 'wagmi';
 import { useGame } from '@/hooks/queries/use-game';
@@ -16,6 +16,7 @@ import { ArrowLeft, Clock, Check, Users, AlertCircle } from 'lucide-react';
 export default function GameSettingsPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { address } = useAccount();
+  const [currentTime, setCurrentTime] = useState<number>(Math.floor(Date.now() / 1000));
   const { data: game, isLoading } = useGame(params.id);
   const { data: commits, isLoading: isLoadingCommits } = useGameCommits(params.id, game?.current_round, {
     gameState: game?.state,
@@ -24,6 +25,28 @@ export default function GameSettingsPage({ params }: { params: { id: string } })
 
   // Subscribe to WebSocket updates for this game
   useWebSocketGame(params.id);
+
+  // Update current time for deadline checks
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(Math.floor(Date.now() / 1000));
+    }, 5000); // Check every 5 seconds
+
+    // Sync time when tab becomes visible again
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        setCurrentTime(Math.floor(Date.now() / 1000));
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // CRITICAL: Always cleanup to prevent memory leaks
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []); // Empty deps - only runs once on mount
 
   // Redirect if not the creator
   useEffect(() => {
@@ -270,7 +293,7 @@ export default function GameSettingsPage({ params }: { params: { id: string } })
         {/* Warning if trying to set reveal but no commits yet */}
         {game.state === 'CommitPhase' &&
           game.commit_deadline &&
-          Date.now() > Number(game.commit_deadline) * 1000 &&
+          currentTime * 1000 > Number(game.commit_deadline) * 1000 &&
           !game.reveal_deadline &&
           commitCount === 0 && (
             <Card className="border-amber-500/50 bg-amber-500/10">
@@ -288,7 +311,7 @@ export default function GameSettingsPage({ params }: { params: { id: string } })
             </Card>
           )}
 
-        <InlineDeadlineForm game={game} />
+        <InlineDeadlineForm game={game} currentTime={currentTime} />
 
         {/* Info Card */}
         {!game.commit_deadline && game.state === 'ZeroPhase' && (
@@ -305,7 +328,7 @@ export default function GameSettingsPage({ params }: { params: { id: string } })
           <Card className="border-amber-500/30 bg-amber-500/5">
             <CardContent className="pt-6">
               <p className="text-sm text-muted-foreground">
-                {game.commit_deadline && Date.now() > Number(game.commit_deadline) * 1000
+                {game.commit_deadline && currentTime * 1000 > Number(game.commit_deadline) * 1000
                   ? commitCount === 0
                     ? 'The commit deadline has passed, but no players have committed yet. At least one commit is required before you can set the reveal deadline.'
                     : 'The commit deadline has passed. Set the reveal deadline to allow players to reveal their votes.'

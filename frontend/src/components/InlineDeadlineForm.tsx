@@ -12,9 +12,10 @@ import type { Game } from '@/lib/supabase';
 
 interface InlineDeadlineFormProps {
   game: Game;
+  currentTime?: number; // Unix timestamp in seconds (optional for backward compatibility)
 }
 
-export function InlineDeadlineForm({ game }: InlineDeadlineFormProps) {
+export function InlineDeadlineForm({ game, currentTime }: InlineDeadlineFormProps) {
   const { address } = useAccount();
   const { toast } = useToast();
 
@@ -26,10 +27,14 @@ export function InlineDeadlineForm({ game }: InlineDeadlineFormProps) {
 
   // Determine which form to show
   const canSetCommitDeadline = game.state === 'ZeroPhase';
+
+  // Use provided currentTime or fallback to Date.now()
+  const now = currentTime ? currentTime * 1000 : Date.now();
+
   const canSetRevealDeadline =
     game.state === 'CommitPhase' &&
     game.commit_deadline &&
-    Date.now() > Number(game.commit_deadline) * 1000;
+    now > Number(game.commit_deadline) * 1000;
 
   // Show success toast when transaction confirms
   useEffect(() => {
