@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { getContractAddress, MinorityRuleGameAbi } from '@/lib/contracts';
 import { useToast } from '@/hooks/use-toast';
 import { AlertCircle, Info } from 'lucide-react';
+import { SQUID_SHAPES } from '@/lib/squid-shapes';
 
 interface VoteData {
   vote: boolean;
@@ -247,30 +248,30 @@ Keep this file safe and come back to reveal your vote during the reveal phase.
           <p className="text-base font-semibold">Choose wisely. Trust no one.</p>
         </div>
 
-        {/* Large Vote Button Cards - Dramatic Liar Game Style */}
+        {/* Large Vote Button Cards - Squid Game Style */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* YES Button */}
+          {/* YES Button - Circle + Teal */}
           <button
             onClick={() => setSelectedVote(true)}
             className={`
               relative p-10 rounded-lg border-2 transition-colors group
               ${selectedVote === true
-                ? 'border-success bg-gradient-to-br from-success/20 to-success/5'
-                : 'border-border/50 bg-card hover:border-success/50 hover:bg-success/5'
+                ? 'border-accent bg-gradient-to-br from-accent/20 to-accent/5'
+                : 'border-border/50 bg-card hover:border-accent/50 hover:bg-accent/5'
               }
             `}
           >
             <div className="text-center space-y-4">
               {selectedVote === true && (
-                <div className="absolute top-4 right-4 text-success text-xl font-bold">✓</div>
+                <div className="absolute top-4 right-4 text-accent text-xl font-bold">{SQUID_SHAPES.star}</div>
               )}
-              <div className="text-5xl">👍</div>
+              <div className="text-5xl text-accent">{SQUID_SHAPES.circle}</div>
               <div className="text-xl font-bold text-foreground uppercase tracking-normal">YES</div>
-              <div className="h-1 w-16 bg-success mx-auto"></div>
+              <div className="h-1 w-16 bg-accent mx-auto"></div>
             </div>
           </button>
 
-          {/* NO Button */}
+          {/* NO Button - Triangle + Pink */}
           <button
             onClick={() => setSelectedVote(false)}
             className={`
@@ -283,9 +284,9 @@ Keep this file safe and come back to reveal your vote during the reveal phase.
           >
             <div className="text-center space-y-4">
               {selectedVote === false && (
-                <div className="absolute top-4 right-4 text-primary text-xl font-bold">✓</div>
+                <div className="absolute top-4 right-4 text-primary text-xl font-bold">{SQUID_SHAPES.star}</div>
               )}
-              <div className="text-5xl">👎</div>
+              <div className="text-5xl text-primary">{SQUID_SHAPES.triangle}</div>
               <div className="text-xl font-bold text-foreground uppercase tracking-normal">NO</div>
               <div className="h-1 w-16 bg-primary mx-auto"></div>
             </div>
@@ -306,7 +307,7 @@ Keep this file safe and come back to reveal your vote during the reveal phase.
         {/* Info Box */}
         <div className="p-5 bg-black/30 border-l-4 border-accent rounded-lg">
           <div className="flex items-start gap-3">
-            <div className="text-xl">🔐</div>
+            <div className="text-xl text-accent">{SQUID_SHAPES.square}</div>
             <div>
               <p className="text-xs font-semibold text-accent mb-1 tracking-normal">Cryptographic commitment</p>
               <p className="text-xs text-muted-foreground leading-relaxed">

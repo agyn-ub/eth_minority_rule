@@ -28,54 +28,54 @@
   }
 
   .dark {
-    /* Primary Colors - LIAR GAME: Dramatic Red & Noir Black */
-    --primary: 0 85% 55%;             /* #DC2626 - Blood Red */
-    --primary-light: 0 75% 65%;       /* #EF4444 - Lighter Red */
-    --primary-dark: 0 90% 40%;        /* #991B1B - Dark Red */
+    /* Primary Colors - SQUID GAME: Pink & Teal */
+    --primary: 338 86% 52%;           /* #ED1B76 - Squid Game Pink */
+    --primary-light: 338 100% 60%;    /* #FF3399 - Lighter Pink */
+    --primary-dark: 338 85% 42%;      /* #C0145D - Dark Pink */
     --primary-foreground: 0 0% 100%;
 
-    --accent: 43 96% 56%;             /* #F59E0B - Gold/Amber */
-    --accent-glow: 43 96% 70%;        /* #FCD34D - Light Gold */
-    --accent-foreground: 0 0% 0%;
+    --accent: 172 100% 33%;           /* #00A693 - Squid Game Teal */
+    --accent-glow: 172 100% 42%;      /* #00D4BE - Light Teal */
+    --accent-foreground: 0 0% 100%;
 
-    /* Game State Colors - More dramatic */
-    --state-waiting: 0 0% 30%;        /* Dark Gray - ZeroPhase */
-    --state-commit: 0 85% 55%;        /* Red - CommitPhase (danger/commitment) */
-    --state-reveal: 43 96% 56%;       /* Gold - RevealPhase (revelation) */
-    --state-completed: 0 0% 20%;      /* Charcoal - Completed */
+    /* Game State Colors - Squid Game Aesthetic */
+    --state-waiting: 0 0% 30%;        /* Dark Gray - ZeroPhase (Circle) */
+    --state-commit: 338 86% 52%;      /* Pink - CommitPhase (Triangle) */
+    --state-reveal: 172 100% 33%;     /* Teal - RevealPhase (Square) */
+    --state-completed: 215 16% 35%;   /* Slate - Completed (Star) */
 
     /* Semantic Colors */
-    --success: 142 76% 36%;           /* #059669 - Darker Green */
+    --success: 179 91% 24%;           /* #067471 - Player Teal */
     --success-foreground: 0 0% 100%;
-    --warning: 43 96% 56%;            /* #F59E0B - Gold */
-    --warning-foreground: 0 0% 0%;
-    --danger: 0 85% 55%;              /* #DC2626 - Red */
+    --warning: 172 100% 33%;          /* Teal - Warning */
+    --warning-foreground: 0 0% 100%;
+    --danger: 338 86% 52%;            /* Pink - Danger */
     --danger-foreground: 0 0% 100%;
-    --destructive: 0 85% 55%;
+    --destructive: 338 86% 52%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Background & Surface - Pure Noir */
-    --background: 0 0% 5%;            /* #0D0D0D - Almost Black */
+    /* Background & Surface - Darker for contrast */
+    --background: 0 0% 3%;            /* #080808 - Near Black */
     --foreground: 0 0% 98%;           /* Crisp White */
 
-    --card: 0 0% 8%;                  /* #141414 - Dark Cards */
+    --card: 0 0% 6%;                  /* #0F0F0F - Dark Cards */
     --card-foreground: 0 0% 98%;
 
-    --surface: 0 0% 8%;               /* Same as card */
-    --surface-elevated: 0 0% 12%;     /* #1F1F1F - Slightly elevated */
+    --surface: 0 0% 6%;               /* Same as card */
+    --surface-elevated: 0 0% 10%;     /* #1A1A1A - Slightly elevated */
 
-    --popover: 0 0% 8%;
+    --popover: 0 0% 6%;
     --popover-foreground: 0 0% 98%;
 
-    --secondary: 0 0% 12%;
+    --secondary: 0 0% 10%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 0 0% 12%;
+    --muted: 0 0% 10%;
     --muted-foreground: 0 0% 55%;     /* Gray text */
 
-    --border: 0 0% 18%;               /* #2E2E2E - Subtle borders */
-    --input: 0 0% 18%;
-    --ring: 0 85% 55%;                /* Red focus ring */
+    --border: 0 0% 15%;               /* #262626 - Subtle borders */
+    --input: 0 0% 15%;
+    --ring: 338 86% 52%;              /* Pink focus ring */
   }
 }
 
@@ -88,7 +88,7 @@
   }
 }
 
-/* Custom Utility Classes - LIAR GAME THEME */
+/* Custom Utility Classes - SQUID GAME THEME */
 @layer utilities {
   /* Gradient Backgrounds */
   .bg-gradient-primary {
@@ -96,15 +96,15 @@
   }
 
   .bg-gradient-danger {
-    background: linear-gradient(135deg, hsl(var(--danger)) 0%, hsl(0 90% 35%) 100%);
+    background: linear-gradient(135deg, hsl(var(--danger)) 0%, hsl(338 85% 35%) 100%);
   }
 
-  .bg-gradient-gold {
-    background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(43 96% 46%) 100%);
+  .bg-gradient-teal {
+    background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(172 100% 25%) 100%);
   }
 
   .bg-gradient-success {
-    background: linear-gradient(135deg, hsl(var(--success)) 0%, hsl(142 76% 26%) 100%);
+    background: linear-gradient(135deg, hsl(var(--success)) 0%, hsl(179 91% 18%) 100%);
   }
 
   /* Removed heavy glow effects for performance */
@@ -123,11 +123,11 @@
   /* Removed text glow effects for performance */
 
   /* Border accent */
-  .border-accent-red {
+  .border-accent-pink {
     border-left: 4px solid hsl(var(--primary));
   }
 
-  .border-accent-gold {
+  .border-accent-teal {
     border-left: 4px solid hsl(var(--accent));
   }
 }

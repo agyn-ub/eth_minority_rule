@@ -429,7 +429,7 @@ export default function GamePage() {
                   </Link>
                   <span
                     className={`px-2 py-1 text-xs rounded-full ${
-                      vote.vote ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                      vote.vote ? 'bg-accent text-white' : 'bg-primary text-white'
                     }`}
                   >
                     {vote.vote ? 'YES' : 'NO'}

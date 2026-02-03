@@ -12,11 +12,14 @@ const buttonVariants = cva(
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
         gradient: "bg-gradient-to-r from-primary via-primary-dark to-black text-white hover:from-primary/90 hover:via-primary-dark/90 hover:to-black/90 border border-primary/30",
         success: "bg-gradient-to-r from-success to-success/80 text-white hover:from-success/90 hover:to-success/70",
-        warning: "bg-gradient-to-r from-accent to-accent/80 text-black font-black hover:from-accent/90 hover:to-accent/70",
+        teal: "bg-gradient-to-r from-accent to-accent/80 text-white font-black hover:from-accent/90 hover:to-accent/70",
+        warning: "bg-gradient-to-r from-amber-500 to-amber-600 text-black font-black hover:from-amber-500/90 hover:to-amber-600/90",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
           "border-2 border-primary bg-transparent text-primary hover:bg-primary hover:text-primary-foreground",
+        "outline-teal":
+          "border-2 border-accent bg-transparent text-accent hover:bg-accent hover:text-accent-foreground",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border",
         ghost: "hover:bg-primary/10 hover:text-primary",

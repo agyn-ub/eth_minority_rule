@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Game } from '@/lib/supabase';
 import { formatWei, getGameStateLabel } from '@/lib/utils';
 import { TimerProgress } from '@/components/TimerProgress';
+import { getGameStateShape, SQUID_SHAPES } from '@/lib/squid-shapes';
 
 interface GameCardProps {
   game: Game;
@@ -31,6 +32,7 @@ function getStateBgColor(state: string): string {
 export function GameCard({ game }: GameCardProps) {
   const stateBgColor = getStateBgColor(game.state);
   const stateLabel = getGameStateLabel(game.state);
+  const stateShape = getGameStateShape(game.state);
 
   const currentDeadline =
     game.state === 'CommitPhase' && game.commit_deadline
@@ -42,11 +44,12 @@ export function GameCard({ game }: GameCardProps) {
   return (
     <Card className="overflow-hidden game-card-hover group cursor-pointer border-border bg-card">
       <Link href={`/game/${game.game_id}`} className="block">
-        {/* State Header Bar - Dramatic */}
+        {/* State Header Bar - Squid Game Style */}
         <div className={`${stateBgColor} px-4 py-3 relative`}>
           <div className="absolute left-0 top-0 w-1 h-full bg-white/30"></div>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-white uppercase tracking-wide">
+            <span className="text-xs font-bold text-white uppercase tracking-wide flex items-center gap-2">
+              <span className="text-base">{stateShape}</span>
               {stateLabel}
             </span>
           </div>
@@ -68,12 +71,12 @@ export function GameCard({ game }: GameCardProps) {
           </h3>
         </div>
 
-        {/* Stats Grid - Sharp & Dramatic */}
+        {/* Stats Grid - Squid Game Style */}
         <div className="px-5 pb-5">
           <div className="grid grid-cols-3 gap-3">
             {/* Prize Pool */}
             <div className="text-center p-3 rounded bg-gradient-to-br from-surface-elevated to-accent/5 border border-accent/20 group-hover:border-accent/40 transition-colors">
-              <div className="text-xl mb-1">💰</div>
+              <div className="text-xl mb-1 text-accent">{SQUID_SHAPES.star}</div>
               <div className="text-base font-bold text-accent">
                 {formatWei(game.prize_pool)}
               </div>
@@ -84,7 +87,7 @@ export function GameCard({ game }: GameCardProps) {
 
             {/* Players */}
             <div className="text-center p-3 rounded bg-gradient-to-br from-surface-elevated to-primary/5 border border-primary/20 group-hover:border-primary/40 transition-colors">
-              <div className="text-xl mb-1">👥</div>
+              <div className="text-xl mb-1 text-primary">{SQUID_SHAPES.circle}</div>
               <div className="text-base font-bold text-foreground">
                 {game.total_players}
               </div>
@@ -95,7 +98,7 @@ export function GameCard({ game }: GameCardProps) {
 
             {/* Round */}
             <div className="text-center p-3 rounded bg-gradient-to-br from-surface-elevated to-surface-elevated border border-border/30 group-hover:border-border/60 transition-colors">
-              <div className="text-xl mb-1">🎯</div>
+              <div className="text-xl mb-1">{SQUID_SHAPES.triangle}</div>
               <div className="text-base font-bold text-foreground">
                 R{game.current_round}
               </div>
@@ -114,7 +117,7 @@ export function GameCard({ game }: GameCardProps) {
             asChild
           >
             <div className="flex items-center justify-center gap-2">
-              <span className="text-lg">▶</span>
+              <span className="text-lg">{stateShape}</span>
               <span>
                 {game.state === 'ZeroPhase' && `Join - ${formatWei(game.entry_fee)} ETH`}
                 {game.state === 'CommitPhase' && 'Vote Now'}
