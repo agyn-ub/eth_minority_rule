@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useAccount } from 'wagmi';
 import { useGame } from '@/hooks/queries/use-game';
 import { useGameCommits } from '@/hooks/queries/use-game-votes';
@@ -13,18 +13,20 @@ import Link from 'next/link';
 import { formatWei } from '@/lib/utils';
 import { ArrowLeft, Clock, Check, Users, AlertCircle } from 'lucide-react';
 
-export default function GameSettingsPage({ params }: { params: { id: string } }) {
+export default function GameSettingsPage() {
   const router = useRouter();
+  const params = useParams();
+  const gameId = gameId as string;
   const { address } = useAccount();
   const [currentTime, setCurrentTime] = useState<number>(Math.floor(Date.now() / 1000));
-  const { data: game, isLoading } = useGame(params.id);
-  const { data: commits, isLoading: isLoadingCommits } = useGameCommits(params.id, game?.current_round, {
+  const { data: game, isLoading } = useGame(gameId);
+  const { data: commits, isLoading: isLoadingCommits } = useGameCommits(gameId, game?.current_round, {
     gameState: game?.state,
   });
   const commitCount = commits?.length ?? 0;
 
   // Subscribe to WebSocket updates for this game
-  useWebSocketGame(params.id);
+  useWebSocketGame(gameId);
 
   // Update current time for deadline checks
   useEffect(() => {
@@ -51,9 +53,9 @@ export default function GameSettingsPage({ params }: { params: { id: string } })
   // Redirect if not the creator
   useEffect(() => {
     if (game && address && game.creator_address.toLowerCase() !== address.toLowerCase()) {
-      router.push(`/game/${params.id}`);
+      router.push(`/game/${gameId}`);
     }
-  }, [game, address, router, params.id]);
+  }, [game, address, router, gameId]);
 
   // Loading state
   if (isLoading) {
