@@ -88,8 +88,9 @@ export function CreateGameModal({ trigger }: CreateGameModalProps) {
         setQuestionText('');
         setEntryFee('0.01');
         reset();
-        // Refetch games list
+        // Refetch games lists
         queryClient.invalidateQueries({ queryKey: ['games'] });
+        queryClient.invalidateQueries({ queryKey: ['my-games'] });
 
         // Navigate to settings if we successfully extracted the game ID
         if (gameId) {

@@ -14,6 +14,8 @@ export function useMyGames() {
       return getMyGames(address);
     },
     enabled: !!address,
-    refetchInterval: 5000, // Poll every 5s for updates
+    refetchInterval: 300_000, // Poll every 5 min as safety net
+    refetchIntervalInBackground: false,
+    placeholderData: (prev) => prev,
   });
 }
