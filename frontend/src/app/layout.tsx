@@ -8,6 +8,7 @@ import { CreateGameModal } from '@/components/CreateGameModal';
 import { NetworkWarningBanner } from '@/components/NetworkWarningBanner';
 import { WebSocketStatus } from '@/components/websocket-status';
 import Link from 'next/link';
+import { SQUID_BRAND, SQUID_SHAPES } from '@/lib/squid-shapes';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -27,17 +28,21 @@ export default function RootLayout({
         <Providers>
           <NetworkWarningBanner />
           <div className="min-h-screen flex flex-col">
-            {/* Dramatic Header - Liar Game Style */}
+            {/* Header - Squid Game Style */}
             <header className="border-b border-primary/30 bg-card sticky top-0 z-50">
               <div className="container mx-auto px-4 py-5 flex items-center justify-between">
                 <Link href="/" className="flex items-center gap-3 group">
-                  <div className="w-1 h-8 bg-gradient-to-b from-primary to-accent"></div>
+                  <div className="flex items-center gap-1 text-lg">
+                    <span className="text-primary">{SQUID_SHAPES.circle}</span>
+                    <span className="text-accent">{SQUID_SHAPES.triangle}</span>
+                    <span className="text-primary">{SQUID_SHAPES.square}</span>
+                  </div>
                   <div>
                     <h1 className="text-lg font-bold tracking-tight">
                       MINORITY RULE
                     </h1>
                     <p className="text-xs text-muted-foreground font-mono tracking-wide">
-                      TRUST NO ONE
+                      ONLY THE MINORITY SURVIVES
                     </p>
                   </div>
                 </Link>
@@ -87,15 +92,16 @@ export default function RootLayout({
             <main className="flex-1 container mx-auto px-4 py-10">{children}</main>
 
             <footer className="border-t border-primary/20 py-8 text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <div className="w-2 h-2 bg-primary"></div>
-                <p className="text-sm font-bold tracking-wider uppercase">
-                  Minority Rule Game
-                </p>
-                <div className="w-2 h-2 bg-accent"></div>
+              <div className="flex items-center justify-center gap-3 mb-2">
+                <span className="text-primary">{SQUID_SHAPES.circle}</span>
+                <span className="text-accent">{SQUID_SHAPES.triangle}</span>
+                <span className="text-primary">{SQUID_SHAPES.square}</span>
               </div>
+              <p className="text-sm font-bold tracking-wider uppercase mb-1">
+                Minority Rule Game
+              </p>
               <p className="text-xs text-muted-foreground font-mono">
-                Built on Base • Where only the minority survives
+                Built on Base • Only the minority survives
               </p>
             </footer>
           </div>

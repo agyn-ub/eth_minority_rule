@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { SQUID_SHAPES } from '@/lib/squid-shapes';
 
 export default function HowItWorksPage() {
   return (
@@ -8,10 +9,11 @@ export default function HowItWorksPage() {
       {/* Header */}
       <div className="text-center space-y-4 py-8">
         <div className="flex items-center justify-center gap-3">
-          <div className="w-2 h-2 bg-primary"></div>
-          <h1 className="text-xl font-bold">How It Works</h1>
-          <div className="w-2 h-2 bg-accent"></div>
+          <span className="text-primary">{SQUID_SHAPES.circle}</span>
+          <span className="text-accent">{SQUID_SHAPES.triangle}</span>
+          <span className="text-primary">{SQUID_SHAPES.square}</span>
         </div>
+        <h1 className="text-xl font-bold">How It Works</h1>
         <p className="text-base text-muted-foreground max-w-2xl mx-auto">
           Discover the game theory, technology, and strategy behind Minority Rule
         </p>
@@ -47,7 +49,7 @@ export default function HowItWorksPage() {
       <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-card">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="text-2xl">⚖️</div>
+            <div className="text-2xl text-primary">{SQUID_SHAPES.triangle}</div>
             <div>
               <CardTitle className="text-lg font-bold">The Philosophy: Reality is Minority Rule</CardTitle>
               <CardDescription>Power, wealth, and control belong to the few</CardDescription>
@@ -73,14 +75,18 @@ export default function HowItWorksPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-4 bg-black/20 rounded-lg border border-border/30">
-              <p className="text-sm font-bold mb-2">🏛 Real World</p>
+              <p className="text-sm font-bold mb-2 flex items-center gap-2">
+                <span className="text-primary">{SQUID_SHAPES.square}</span> Real World
+              </p>
               <p className="text-xs text-muted-foreground">
                 Power concentrated in the hands of the few. The masses follow, the elite decide.
                 Wealth inequality grows. The minority rules.
               </p>
             </div>
             <div className="p-4 bg-black/20 rounded-lg border border-border/30">
-              <p className="text-sm font-bold mb-2">🎮 This Game</p>
+              <p className="text-sm font-bold mb-2 flex items-center gap-2">
+                <span className="text-accent">{SQUID_SHAPES.triangle}</span> This Game
+              </p>
               <p className="text-xs text-muted-foreground">
                 Power belongs to those who think differently. Stand apart from the crowd to survive.
                 Strategy beats conformity. Choose to be the minority.
@@ -100,10 +106,10 @@ export default function HowItWorksPage() {
       <Card className="border-accent/30">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="text-2xl">🎬</div>
+            <div className="text-2xl text-accent">{SQUID_SHAPES.triangle}</div>
             <div>
-              <CardTitle className="text-lg font-bold">Inspired by Liar Game</CardTitle>
-              <CardDescription>The legendary Japanese psychological thriller</CardDescription>
+              <CardTitle className="text-lg font-bold">Inspired by Squid Game & Liar Game</CardTitle>
+              <CardDescription>Legendary psychological survival games</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -132,17 +138,17 @@ export default function HowItWorksPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 bg-surface-elevated rounded-lg border border-border/30">
-              <div className="text-xl mb-2">🧠</div>
+              <div className="text-xl mb-2 text-primary">{SQUID_SHAPES.circle}</div>
               <p className="text-sm font-bold mb-1">Psychology</p>
               <p className="text-xs text-muted-foreground">Predict opponent behavior</p>
             </div>
             <div className="p-4 bg-surface-elevated rounded-lg border border-border/30">
-              <div className="text-xl mb-2">🎯</div>
+              <div className="text-xl mb-2 text-accent">{SQUID_SHAPES.triangle}</div>
               <p className="text-sm font-bold mb-1">Strategy</p>
               <p className="text-xs text-muted-foreground">Adapt each round</p>
             </div>
             <div className="p-4 bg-surface-elevated rounded-lg border border-border/30">
-              <div className="text-xl mb-2">⚡</div>
+              <div className="text-xl mb-2 text-primary">{SQUID_SHAPES.square}</div>
               <p className="text-sm font-bold mb-1">High Stakes</p>
               <p className="text-xs text-muted-foreground">Real consequences</p>
             </div>
@@ -154,7 +160,7 @@ export default function HowItWorksPage() {
       <Card className="border-primary/30">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="text-2xl">📊</div>
+            <div className="text-2xl text-primary">{SQUID_SHAPES.square}</div>
             <div>
               <CardTitle className="text-lg font-bold">Game Theory: The Minority Game</CardTitle>
               <CardDescription>A study in anti-coordination and emergent complexity</CardDescription>
@@ -201,7 +207,7 @@ export default function HowItWorksPage() {
       <Card className="border-accent/30">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="text-2xl">🎮</div>
+            <div className="text-2xl text-accent">{SQUID_SHAPES.circle}</div>
             <div>
               <CardTitle className="text-lg font-bold">How to Play</CardTitle>
               <CardDescription>Step-by-step gameplay guide</CardDescription>
@@ -334,7 +340,7 @@ export default function HowItWorksPage() {
       <Card className="border-primary/30 bg-gradient-to-br from-card to-accent/5">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="text-2xl">⚙️</div>
+            <div className="text-2xl text-accent">{SQUID_SHAPES.square}</div>
             <div>
               <CardTitle className="text-lg font-bold">Technology Stack</CardTitle>
               <CardDescription>Built on secure, transparent blockchain infrastructure</CardDescription>
@@ -501,7 +507,7 @@ export default function HowItWorksPage() {
       <Card className="border-accent/30">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="text-2xl">💡</div>
+            <div className="text-2xl text-accent">{SQUID_SHAPES.star}</div>
             <div>
               <CardTitle className="text-lg font-bold">Strategy Tips</CardTitle>
               <CardDescription>Outsmart your opponents</CardDescription>
@@ -546,13 +552,18 @@ export default function HowItWorksPage() {
       {/* CTA */}
       <Card className="border-primary/30 bg-gradient-to-br from-primary/10 to-card text-center">
         <CardContent className="py-8">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <span className="text-xl text-primary">{SQUID_SHAPES.circle}</span>
+            <span className="text-xl text-accent">{SQUID_SHAPES.triangle}</span>
+            <span className="text-xl text-primary">{SQUID_SHAPES.square}</span>
+          </div>
           <p className="text-lg font-bold mb-2">Ready to Test Your Strategy?</p>
           <p className="text-sm text-muted-foreground mb-6">
             Join a game and experience the psychological warfare firsthand
           </p>
           <Link href="/">
             <Button size="lg" variant="gradient" className="h-12 px-8">
-              ⚡ Browse Games
+              {SQUID_SHAPES.triangle} Browse Games
             </Button>
           </Link>
         </CardContent>
@@ -562,7 +573,7 @@ export default function HowItWorksPage() {
       <Card className="border-accent/30">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="text-2xl">💬</div>
+            <div className="text-2xl text-primary">{SQUID_SHAPES.circle}</div>
             <div>
               <CardTitle className="text-lg font-bold">Join the Community</CardTitle>
               <CardDescription>Connect, discuss strategy, and stay updated</CardDescription>
@@ -593,19 +604,25 @@ export default function HowItWorksPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 bg-surface-elevated rounded-lg border border-border/30 text-center">
-              <p className="text-sm font-bold mb-1">💡 Share Ideas</p>
+              <p className="text-sm font-bold mb-1 flex items-center justify-center gap-2">
+                <span className="text-accent">{SQUID_SHAPES.circle}</span> Share Ideas
+              </p>
               <p className="text-xs text-muted-foreground">
                 Suggest new game mechanics
               </p>
             </div>
             <div className="p-4 bg-surface-elevated rounded-lg border border-border/30 text-center">
-              <p className="text-sm font-bold mb-1">📢 Get Updates</p>
+              <p className="text-sm font-bold mb-1 flex items-center justify-center gap-2">
+                <span className="text-primary">{SQUID_SHAPES.triangle}</span> Get Updates
+              </p>
               <p className="text-xs text-muted-foreground">
                 New games and features
               </p>
             </div>
             <div className="p-4 bg-surface-elevated rounded-lg border border-border/30 text-center">
-              <p className="text-sm font-bold mb-1">🤝 Connect</p>
+              <p className="text-sm font-bold mb-1 flex items-center justify-center gap-2">
+                <span className="text-accent">{SQUID_SHAPES.square}</span> Connect
+              </p>
               <p className="text-xs text-muted-foreground">
                 Meet other players
               </p>

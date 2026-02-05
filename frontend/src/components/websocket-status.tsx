@@ -9,15 +9,15 @@ export function WebSocketStatus() {
   const getStatusColor = () => {
     switch (status) {
       case ConnectionStatus.CONNECTED:
-        return 'bg-green-500';
+        return 'bg-accent';
       case ConnectionStatus.CONNECTING:
       case ConnectionStatus.RECONNECTING:
-        return 'bg-yellow-500';
+        return 'bg-amber-500';
       case ConnectionStatus.ERROR:
-        return 'bg-red-500';
+        return 'bg-primary';
       case ConnectionStatus.DISCONNECTED:
       default:
-        return 'bg-gray-500';
+        return 'bg-muted-foreground';
     }
   };
 

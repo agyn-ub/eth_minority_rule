@@ -96,14 +96,14 @@ export function getGameStateLabel(state: string): string {
 export function getGameStateColor(state: string): string {
   switch (state) {
     case 'ZeroPhase':
-      return 'bg-gray-500';
+      return 'bg-state-waiting';
     case 'CommitPhase':
-      return 'bg-blue-500';
+      return 'bg-state-commit';
     case 'RevealPhase':
-      return 'bg-yellow-500';
+      return 'bg-state-reveal';
     case 'Completed':
-      return 'bg-green-500';
+      return 'bg-state-completed';
     default:
-      return 'bg-gray-500';
+      return 'bg-state-waiting';
   }
 }
