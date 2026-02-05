@@ -16,7 +16,7 @@ interface InlineDeadlineFormProps {
 }
 
 export function InlineDeadlineForm({ game, currentTime }: InlineDeadlineFormProps) {
-  const { address } = useAccount();
+  const { address, chainId } = useAccount();
   const { toast } = useToast();
 
   const [commitDuration, setCommitDuration] = useState('300');
@@ -81,7 +81,7 @@ export function InlineDeadlineForm({ game, currentTime }: InlineDeadlineFormProp
 
     try {
       writeContract({
-        address: getContractAddress(31337), // Using Anvil chain ID
+        address: getContractAddress(chainId!),
         abi: MinorityRuleGameAbi,
         functionName: 'setCommitDeadline',
         args: [BigInt(game.game_id), BigInt(duration)],
@@ -107,7 +107,7 @@ export function InlineDeadlineForm({ game, currentTime }: InlineDeadlineFormProp
 
     try {
       writeContract({
-        address: getContractAddress(31337), // Using Anvil chain ID
+        address: getContractAddress(chainId!),
         abi: MinorityRuleGameAbi,
         functionName: 'setRevealDeadline',
         args: [BigInt(game.game_id), BigInt(duration)],
