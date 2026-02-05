@@ -68,6 +68,34 @@ export const GET_COMPLETED_GAMES = gql`
   }
 `;
 
+// Games created by a specific address
+export const GET_MY_GAMES = gql`
+  query GetMyGames($creatorAddress: String!) {
+    gamess(
+      where: { creator_address: $creatorAddress }
+      orderBy: "block_number"
+      orderDirection: "desc"
+    ) {
+      items {
+        game_id
+        question_text
+        entry_fee
+        creator_address
+        state
+        current_round
+        total_players
+        prize_pool
+        commit_deadline
+        reveal_deadline
+        created_at
+        updated_at
+        block_number
+        transaction_hash
+      }
+    }
+  }
+`;
+
 // Single game detail
 export const GET_GAME = gql`
   query GetGame($gameId: BigInt!) {
