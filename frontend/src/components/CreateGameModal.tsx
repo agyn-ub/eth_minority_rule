@@ -35,7 +35,7 @@ export function CreateGameModal({ trigger }: CreateGameModalProps) {
   const [entryFee, setEntryFee] = useState('0.01');
 
   const { writeContract, data: hash, isPending, reset } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess, data: receipt } = useWaitForTransactionReceipt({ hash });
+  const { isLoading: isConfirming, isSuccess, data: receipt } = useWaitForTransactionReceipt({ hash, chainId: chainId as any });
 
   // Check if current chain is supported
   const supportedChains = [31337, 84532, 8453]; // Anvil, Base Sepolia, Base Mainnet

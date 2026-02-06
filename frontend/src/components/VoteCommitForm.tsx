@@ -32,7 +32,7 @@ export function VoteCommitForm({ gameId, currentRound }: VoteCommitFormProps) {
   const [committedVoteData, setCommittedVoteData] = useState<VoteData | null>(null);
 
   const { writeContract, data: hash, isPending } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash, chainId: chainId as any });
 
   // Load committed vote data when transaction confirms
   // Let polling naturally update the UI (no cache invalidation needed)

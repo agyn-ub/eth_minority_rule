@@ -16,7 +16,7 @@ export function ProcessRoundForm({ gameId }: ProcessRoundFormProps) {
   const { toast } = useToast();
 
   const { writeContract, data: hash, isPending } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash, chainId: chainId as any });
 
   // Show success toast when transaction confirms
   // Let polling naturally update the UI

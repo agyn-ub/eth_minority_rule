@@ -23,7 +23,7 @@ export function InlineDeadlineForm({ game, currentTime }: InlineDeadlineFormProp
   const [revealDuration, setRevealDuration] = useState('180');
 
   const { writeContract, data: hash, isPending, isError, error, reset } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash, chainId: chainId as any });
 
   // Determine which form to show
   const canSetCommitDeadline = game.state === 'ZeroPhase';

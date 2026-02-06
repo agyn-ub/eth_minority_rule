@@ -22,7 +22,7 @@ export function GameConfigForm({ gameId, currentState }: GameConfigFormProps) {
   const [revealDuration, setRevealDuration] = useState<string>('180'); // 3 minutes default
 
   const { writeContract, data: hash, isPending } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash, chainId: chainId as any });
 
   // Show success toast when transaction confirms
   // Let polling naturally update the UI
