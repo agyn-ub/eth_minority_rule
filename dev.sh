@@ -34,9 +34,11 @@ anvil 2>&1 | sed -u 's/^/[anvil] /' &
 ANVIL_PID=$!
 sleep 2
 
-# 3. Deploy contract and capture address
-echo "==> Deploying contract..."
-DEPLOY_OUTPUT=$(forge script script/Deploy.s.sol --broadcast --rpc-url http://localhost:8545 2>&1)
+# 3. Deploy contract from Anvil Account 0 (deterministic address)
+echo "==> Deploying contract from Anvil Account 0..."
+# Anvil Account 0 private key - always deploys to 0x5FbDB2315678afecb367f032d93F642f64180aa3
+ANVIL_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+DEPLOY_OUTPUT=$(PRIVATE_KEY=$ANVIL_PRIVATE_KEY forge script script/Deploy.s.sol --broadcast --rpc-url http://localhost:8545 2>&1)
 echo "$DEPLOY_OUTPUT" | sed 's/^/[deploy] /'
 
 CONTRACT_ADDR=$(echo "$DEPLOY_OUTPUT" | grep "MinorityRuleGame deployed to:" | grep -oE '0x[a-fA-F0-9]{40}')
