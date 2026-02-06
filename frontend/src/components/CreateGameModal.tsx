@@ -32,7 +32,7 @@ export function CreateGameModal({ trigger }: CreateGameModalProps) {
 
   const [open, setOpen] = useState(false);
   const [questionText, setQuestionText] = useState('');
-  const [entryFee, setEntryFee] = useState('0.01');
+  const [entryFee, setEntryFee] = useState('0.001');
 
   const { writeContract, data: hash, isPending, reset } = useWriteContract();
   const { isLoading: isConfirming, isSuccess, data: receipt } = useWaitForTransactionReceipt({ hash, chainId: chainId as any });

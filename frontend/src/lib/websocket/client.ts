@@ -19,9 +19,11 @@ export class WebSocketClient {
 
   connect(): void {
     if (this.ws?.readyState === WebSocket.OPEN) {
+      console.log('[WS] Already connected');
       return;
     }
 
+    console.log('[WS] Connecting to:', WEBSOCKET_CONFIG.url);
     this.updateStatus(ConnectionStatus.CONNECTING);
 
     try {
@@ -62,10 +64,14 @@ export class WebSocketClient {
   }
 
   subscribe(gameId: string): void {
+    console.log('[WS] subscribe() called for game:', gameId, 'status:', this.status);
     this.subscribedRooms.add(`game:${gameId}`);
 
     if (this.status === ConnectionStatus.CONNECTED) {
+      console.log('[WS] Sending subscribe message for game:', gameId);
       this.send({ type: 'subscribe', gameId });
+    } else {
+      console.log('[WS] Not connected, will subscribe on reconnect');
     }
   }
 
@@ -119,17 +125,20 @@ export class WebSocketClient {
   }
 
   private handleOpen(): void {
-    console.log('✅ WebSocket connected');
+    console.log('[WS] ✅ Connected to:', WEBSOCKET_CONFIG.url);
     this.reconnectAttempts = 0;
     this.updateStatus(ConnectionStatus.CONNECTED);
     this.startHeartbeat();
 
     // Resubscribe to all rooms
+    console.log('[WS] Resubscribing to rooms:', Array.from(this.subscribedRooms));
     for (const room of this.subscribedRooms) {
       if (room.startsWith('game:')) {
         const gameId = room.replace('game:', '');
+        console.log('[WS] Subscribing to game:', gameId);
         this.send({ type: 'subscribe', gameId });
       } else if (room.startsWith('list:')) {
+        console.log('[WS] Subscribing to list:', room);
         this.send({ type: 'subscribe', room });
       }
     }
@@ -138,6 +147,7 @@ export class WebSocketClient {
   private handleMessage(event: MessageEvent): void {
     try {
       const message: ServerMessage = JSON.parse(event.data);
+      console.log('[WS] Message received:', message.type, message);
 
       switch (message.type) {
         case 'ping':
@@ -145,23 +155,24 @@ export class WebSocketClient {
           break;
 
         case 'event':
+          console.log('[WS] 🎮 Game event:', message.eventType, message.gameId, message.data);
           this.handleEvent(message);
           break;
 
         case 'subscribed':
-          console.log('Subscribed to:', message.gameId || message.room);
+          console.log('[WS] ✅ Subscribed to:', message.gameId || message.room);
           break;
 
         case 'unsubscribed':
-          console.log('Unsubscribed from:', message.gameId || message.room);
+          console.log('[WS] Unsubscribed from:', message.gameId || message.room);
           break;
 
         case 'error':
-          console.error('WebSocket error:', message.message);
+          console.error('[WS] ❌ Server error:', message.message);
           break;
       }
     } catch (error) {
-      console.error('Failed to parse WebSocket message:', error);
+      console.error('[WS] Failed to parse message:', error, event.data);
     }
   }
 
@@ -194,12 +205,12 @@ export class WebSocketClient {
   }
 
   private handleError(error: Event): void {
-    console.error('WebSocket error:', error);
+    console.error('[WS] ❌ Connection error:', error);
     this.updateStatus(ConnectionStatus.ERROR);
   }
 
   private handleClose(): void {
-    console.log('WebSocket closed');
+    console.log('[WS] Connection closed');
     this.stopHeartbeat();
     this.scheduleReconnect();
   }
