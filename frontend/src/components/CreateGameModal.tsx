@@ -18,6 +18,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getContractAddress, MinorityRuleGameAbi } from '@/lib/contracts';
 import { useToast } from '@/hooks/use-toast';
+import { getWebSocketClient } from '@/lib/websocket/client';
+import { GameEventType } from '@/lib/websocket/types';
 
 interface CreateGameModalProps {
   trigger: React.ReactNode;
@@ -82,11 +84,11 @@ export function CreateGameModal({ trigger }: CreateGameModalProps) {
         console.error('Error parsing GameCreated event:', error);
       }
 
-      setTimeout(() => {
+      const navigateToGame = () => {
         setOpen(false);
         // Reset form state
         setQuestionText('');
-        setEntryFee('0.01');
+        setEntryFee('0.001');
         reset();
         // Refetch games lists
         queryClient.invalidateQueries({ queryKey: ['games'] });
@@ -96,7 +98,47 @@ export function CreateGameModal({ trigger }: CreateGameModalProps) {
         if (gameId) {
           router.push(`/my-games/${gameId}/settings`);
         }
-      }, 2000);
+      };
+
+      if (gameId) {
+        // Listen for WebSocket confirmation that indexer has processed the game
+        const wsClient = getWebSocketClient();
+        wsClient.connect();
+        wsClient.subscribeToList('active');
+
+        let hasNavigated = false;
+
+        const handleGameCreated = (data: any) => {
+          console.log('[CreateGame] WebSocket GameCreated received:', data);
+          if (data.gameId === gameId && !hasNavigated) {
+            hasNavigated = true;
+            wsClient.off('GameCreated' as GameEventType, handleGameCreated);
+            navigateToGame();
+          }
+        };
+
+        wsClient.on('GameCreated' as GameEventType, handleGameCreated);
+
+        // Fallback timeout in case WebSocket doesn't deliver
+        const fallbackTimeout = setTimeout(() => {
+          if (!hasNavigated) {
+            console.log('[CreateGame] Fallback timeout triggered');
+            hasNavigated = true;
+            wsClient.off('GameCreated' as GameEventType, handleGameCreated);
+            navigateToGame();
+          }
+        }, 10000);
+
+        return () => {
+          clearTimeout(fallbackTimeout);
+          wsClient.off('GameCreated' as GameEventType, handleGameCreated);
+          wsClient.unsubscribeFromList('active');
+        };
+      } else {
+        // No gameId extracted, use fallback delay
+        const timeout = setTimeout(navigateToGame, 5000);
+        return () => clearTimeout(timeout);
+      }
     }
   }, [isSuccess, receipt, queryClient, reset, router]);
 
