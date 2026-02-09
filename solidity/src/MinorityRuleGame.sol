@@ -86,6 +86,7 @@ contract MinorityRuleGame {
         uint8 totalRounds,
         uint256 finalPrize,
         uint256 platformFee,
+        uint256 creatorFee,
         address[] winners,
         uint256 prizePerWinner
     );
@@ -149,6 +150,7 @@ contract MinorityRuleGame {
 
     uint256 public nextGameId = 1;
     uint256 public constant PLATFORM_FEE_PERCENTAGE = 2; // 2%
+    uint256 public constant CREATOR_FEE_PERCENTAGE = 3; // 3%
     address public immutable platformFeeRecipient;
 
     mapping(uint256 => Game) public games;
@@ -530,16 +532,23 @@ contract MinorityRuleGame {
 
         uint256 totalPrize = game.prizePool;
         uint256 platformFee = 0;
+        uint256 creatorFee = 0;
 
         if (totalPrize > 0) {
             // Calculate 2% platform fee
             platformFee = (totalPrize * PLATFORM_FEE_PERCENTAGE) / 100;
+            // Calculate 3% creator fee
+            creatorFee = (totalPrize * CREATOR_FEE_PERCENTAGE) / 100;
 
             // Send platform fee
             (bool success, ) = platformFeeRecipient.call{value: platformFee}("");
             if (!success) revert TransferFailed();
 
-            uint256 remainingPrize = totalPrize - platformFee;
+            // Send creator fee
+            (bool creatorSuccess, ) = game.creator.call{value: creatorFee}("");
+            if (!creatorSuccess) revert TransferFailed();
+
+            uint256 remainingPrize = totalPrize - platformFee - creatorFee;
 
             // Distribute to winners
             if (game.winners.length > 0) {
@@ -555,11 +564,12 @@ contract MinorityRuleGame {
                     game.currentRound,
                     remainingPrize,
                     platformFee,
+                    creatorFee,
                     game.winners,
                     prizePerWinner
                 );
             } else {
-                // No winners - platform gets remaining prize
+                // No winners - platform gets remaining prize (creator still gets their fee)
                 (bool noWinnerSuccess, ) = platformFeeRecipient.call{value: remainingPrize}("");
                 if (!noWinnerSuccess) revert TransferFailed();
 
@@ -568,6 +578,7 @@ contract MinorityRuleGame {
                     game.currentRound,
                     0,
                     platformFee + remainingPrize,
+                    creatorFee,
                     game.winners,
                     0
                 );

@@ -71,6 +71,7 @@ export const winners = onchainTable("winners", (p) => ({
   player_address: p.text().notNull(),
   prize_amount: p.text().notNull(), // NUMERIC(78,0) stored as string
   platform_fee: p.text().notNull(), // NUMERIC(78,0) stored as string
+  creator_fee: p.text().notNull(), // NUMERIC(78,0) stored as string
   paid_at: p.text().notNull(),
   block_number: p.bigint().notNull(),
   transaction_hash: p.text().notNull(),

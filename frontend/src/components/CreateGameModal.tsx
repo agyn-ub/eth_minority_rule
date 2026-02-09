@@ -311,7 +311,7 @@ export function CreateGameModal({ trigger }: CreateGameModalProps) {
                   <li>4. Players reveal their votes</li>
                   <li>5. Only the minority advances to the next round</li>
                   <li>6. Game continues until 1-2 players remain</li>
-                  <li>7. Winners split the prize pool (minus 2% platform fee)</li>
+                  <li>7. Winners split the prize pool (minus 5% fees: 2% platform + 3% creator)</li>
                 </ul>
               </div>
 

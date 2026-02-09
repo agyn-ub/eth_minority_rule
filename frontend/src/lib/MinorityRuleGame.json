@@ -12,6 +12,19 @@
   },
   {
     "type": "function",
+    "name": "CREATOR_FEE_PERCENTAGE",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "PLATFORM_FEE_PERCENTAGE",
     "inputs": [],
     "outputs": [
@@ -412,6 +425,12 @@
       },
       {
         "name": "platformFee",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "creatorFee",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"

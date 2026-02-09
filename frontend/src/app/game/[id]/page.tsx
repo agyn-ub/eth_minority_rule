@@ -496,6 +496,30 @@ export default function GamePage() {
                 </div>
               ))}
             </div>
+            {winners[0] && (
+              <div className="mt-4 pt-4 border-t border-border/50">
+                <p className="text-xs text-muted-foreground">
+                  Fee breakdown: {formatWei(winners[0].platform_fee)} ETH platform fee (2%) + {formatWei(winners[0].creator_fee)} ETH creator fee (3%)
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {isCreator && game.state === 'Completed' && (
+        <Card className="border-accent/30 bg-accent/5">
+          <CardHeader>
+            <CardTitle>Creator Earnings</CardTitle>
+            <CardDescription>Your 3% creator fee for this game</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-accent">
+              {formatWei(
+                winners[0]?.creator_fee
+                  ?? (BigInt(game.prize_pool) * 3n / 100n).toString()
+              )} ETH
+            </p>
           </CardContent>
         </Card>
       )}

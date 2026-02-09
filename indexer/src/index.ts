@@ -336,6 +336,7 @@ ponder.on("MinorityRuleGame:GameCompleted", async ({ event, context }) => {
       player_address: winner.toLowerCase(),
       prize_amount: event.args.prizePerWinner.toString(),
       platform_fee: event.args.platformFee.toString(),
+      creator_fee: event.args.creatorFee.toString(),
       paid_at: timestamp,
       block_number: event.block.number,
       transaction_hash: event.transaction.hash,
@@ -351,5 +352,6 @@ ponder.on("MinorityRuleGame:GameCompleted", async ({ event, context }) => {
     winners: event.args.winners.map(w => w.toLowerCase()),
     prizePerWinner: event.args.prizePerWinner.toString(),
     platformFee: event.args.platformFee.toString(),
+    creatorFee: event.args.creatorFee.toString(),
   });
 });

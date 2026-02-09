@@ -243,6 +243,7 @@ export const GET_GAME_WINNERS = gql`
         player_address
         prize_amount
         platform_fee
+        creator_fee
         paid_at
         block_number
         transaction_hash

@@ -23,6 +23,7 @@ contract DeployScript is Script {
 
         console.log("MinorityRuleGame deployed to:", address(game));
         console.log("Platform Fee: 2%");
+        console.log("Creator Fee: 3%");
         console.log("Next Game ID:", game.nextGameId());
 
         return game;

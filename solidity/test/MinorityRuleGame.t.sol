@@ -397,12 +397,76 @@ contract MinorityRuleGameTest is Test {
         // Check payouts
         uint256 totalPrize = 2 ether;
         uint256 platformFee = (totalPrize * 2) / 100; // 2%
-        uint256 remainingPrize = totalPrize - platformFee;
+        uint256 creatorFee = (totalPrize * 3) / 100; // 3%
+        uint256 remainingPrize = totalPrize - platformFee - creatorFee;
         uint256 prizePerWinner = remainingPrize / 2;
 
         assertEq(platformRecipient.balance - platformBalanceBefore, platformFee);
-        assertEq(creator.balance - creatorBalanceBefore, prizePerWinner);
+        // Creator gets both creator fee + winner share (creator is also a winner)
+        assertEq(creator.balance - creatorBalanceBefore, prizePerWinner + creatorFee);
         assertEq(player1.balance - player1BalanceBefore, prizePerWinner);
+    }
+
+    function test_CreatorFeePercentage() public {
+        assertEq(game.CREATOR_FEE_PERCENTAGE(), 3);
+    }
+
+    function test_CreatorFeeDistribution() public {
+        // Creator does NOT join — isolates creator fee from winner prize
+        uint256 gameId = createTestGame();
+
+        vm.prank(creator);
+        game.setCommitDeadline(gameId, 3600);
+
+        // Only player1 and player2 join
+        vm.prank(player1);
+        game.joinGame{value: ENTRY_FEE}(gameId);
+
+        vm.prank(player2);
+        game.joinGame{value: ENTRY_FEE}(gameId);
+
+        bytes32 salt1 = keccak256("salt1");
+        bytes32 salt2 = keccak256("salt2");
+
+        vm.prank(player1);
+        game.submitCommit(gameId, generateCommitHash(true, salt1));
+
+        vm.prank(player2);
+        game.submitCommit(gameId, generateCommitHash(false, salt2));
+
+        vm.warp(block.timestamp + 3601);
+
+        vm.prank(creator);
+        game.setRevealDeadline(gameId, 3600);
+
+        vm.prank(player1);
+        game.submitReveal(gameId, true, salt1);
+
+        vm.prank(player2);
+        game.submitReveal(gameId, false, salt2);
+
+        vm.warp(block.timestamp + 3601);
+
+        uint256 creatorBalanceBefore = creator.balance;
+        uint256 platformBalanceBefore = platformRecipient.balance;
+        uint256 player1BalanceBefore = player1.balance;
+        uint256 player2BalanceBefore = player2.balance;
+
+        game.processRound(gameId);
+
+        uint256 totalPrize = 2 ether;
+        uint256 expectedPlatformFee = (totalPrize * 2) / 100;  // 0.04 ETH
+        uint256 expectedCreatorFee = (totalPrize * 3) / 100;   // 0.06 ETH
+        uint256 remainingPrize = totalPrize - expectedPlatformFee - expectedCreatorFee;
+        uint256 expectedPrizePerWinner = remainingPrize / 2;    // 0.95 ETH each
+
+        // Creator only gets creator fee (not a winner)
+        assertEq(creator.balance - creatorBalanceBefore, expectedCreatorFee);
+        // Platform gets platform fee
+        assertEq(platformRecipient.balance - platformBalanceBefore, expectedPlatformFee);
+        // Winners split the remaining 95%
+        assertEq(player1.balance - player1BalanceBefore, expectedPrizePerWinner);
+        assertEq(player2.balance - player2BalanceBefore, expectedPrizePerWinner);
     }
 
     // ============ View Function Tests ============

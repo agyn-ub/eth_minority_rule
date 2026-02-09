@@ -20,6 +20,7 @@ export interface GraphQLWinner {
   player_address: string;
   prize_amount: string;
   platform_fee: string;
+  creator_fee: string;
   paid_at: string;
   block_number: string;
   transaction_hash: string;
