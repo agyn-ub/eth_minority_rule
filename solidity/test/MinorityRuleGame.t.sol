@@ -3,10 +3,13 @@ pragma solidity ^0.8.23;
 
 import {Test, console} from "forge-std/Test.sol";
 import {MinorityRuleGame} from "../src/MinorityRuleGame.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract MinorityRuleGameTest is Test {
     MinorityRuleGame public game;
+    MinorityRuleGame public implementation;
 
+    address public owner = makeAddr("owner");
     address public platformRecipient = makeAddr("platform");
     address public creator = makeAddr("creator");
     address public player1 = makeAddr("player1");
@@ -33,7 +36,17 @@ contract MinorityRuleGameTest is Test {
     );
 
     function setUp() public {
-        game = new MinorityRuleGame(platformRecipient);
+        // Deploy implementation
+        implementation = new MinorityRuleGame();
+
+        // Deploy proxy with initializer
+        bytes memory initData = abi.encodeWithSelector(
+            MinorityRuleGame.initialize.selector,
+            platformRecipient,
+            owner
+        );
+        ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
+        game = MinorityRuleGame(address(proxy));
 
         // Fund test accounts
         vm.deal(creator, 100 ether);
@@ -484,5 +497,61 @@ contract MinorityRuleGameTest is Test {
         game.joinGame{value: ENTRY_FEE}(gameId);
 
         assertTrue(game.hasPlayerJoined(gameId, player1));
+    }
+
+    // ============ Proxy / Upgrade Tests ============
+
+    function test_Initialization() public view {
+        assertEq(game.platformFeeRecipient(), platformRecipient);
+        assertEq(game.owner(), owner);
+        assertEq(game.nextGameId(), 1);
+    }
+
+    function testRevert_CannotInitializeTwice() public {
+        vm.expectRevert();
+        game.initialize(platformRecipient, owner);
+    }
+
+    function testRevert_CannotInitializeImplementation() public {
+        vm.expectRevert();
+        implementation.initialize(platformRecipient, owner);
+    }
+
+    function test_UpgradeByOwner() public {
+        MinorityRuleGame newImpl = new MinorityRuleGame();
+
+        vm.prank(owner);
+        game.upgradeToAndCall(address(newImpl), "");
+
+        // State preserved after upgrade
+        assertEq(game.nextGameId(), 1);
+        assertEq(game.platformFeeRecipient(), platformRecipient);
+        assertEq(game.owner(), owner);
+    }
+
+    function testRevert_UpgradeByNonOwner() public {
+        MinorityRuleGame newImpl = new MinorityRuleGame();
+
+        vm.prank(player1);
+        vm.expectRevert();
+        game.upgradeToAndCall(address(newImpl), "");
+    }
+
+    function test_StatePreservedAcrossUpgrade() public {
+        // Create a game first
+        vm.prank(creator);
+        uint256 gameId = game.createGame("Test question?", ENTRY_FEE);
+        assertEq(game.nextGameId(), 2);
+
+        // Upgrade
+        MinorityRuleGame newImpl = new MinorityRuleGame();
+        vm.prank(owner);
+        game.upgradeToAndCall(address(newImpl), "");
+
+        // Verify state survived
+        assertEq(game.nextGameId(), 2);
+        (uint256 id, string memory q,,,,,,,,,,,,,) = game.getGameInfo(gameId);
+        assertEq(id, gameId);
+        assertEq(q, "Test question?");
     }
 }

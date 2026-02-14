@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+
 /**
  * @title MinorityRuleGame
  * @notice A game where players answer yes/no questions, and only those in the minority advance
- * @dev Implements commit-reveal voting to prevent front-running
+ * @dev Implements commit-reveal voting to prevent front-running. Uses UUPS proxy for upgradeability.
  */
-contract MinorityRuleGame {
+contract MinorityRuleGame is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     // ============ Errors ============
 
     error InvalidEntryFee();
@@ -148,19 +152,40 @@ contract MinorityRuleGame {
 
     // ============ State Variables ============
 
-    uint256 public nextGameId = 1;
     uint256 public constant PLATFORM_FEE_PERCENTAGE = 2; // 2%
     uint256 public constant CREATOR_FEE_PERCENTAGE = 3; // 3%
-    address public immutable platformFeeRecipient;
+
+    address public platformFeeRecipient;
+    uint256 public nextGameId;
 
     mapping(uint256 => Game) public games;
 
+    // ============ Storage Gap ============
+
+    uint256[47] private __gap;
+
     // ============ Constructor ============
 
-    constructor(address _platformFeeRecipient) {
-        require(_platformFeeRecipient != address(0), "Invalid platform recipient");
-        platformFeeRecipient = _platformFeeRecipient;
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
     }
+
+    // ============ Initializer ============
+
+    function initialize(address _platformFeeRecipient, address _owner) external initializer {
+        require(_platformFeeRecipient != address(0), "Invalid platform recipient");
+        require(_owner != address(0), "Invalid owner");
+
+        __Ownable_init(_owner);
+
+        platformFeeRecipient = _platformFeeRecipient;
+        nextGameId = 1;
+    }
+
+    // ============ UUPS Authorization ============
+
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     // ============ External Functions ============
 

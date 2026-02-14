@@ -267,3 +267,133 @@ export const GET_GAME_ELIMINATIONS = gql`
     }
   }
 `;
+
+// All games a player participated in
+export const GET_PLAYER_GAMES = gql`
+  query GetPlayerGames($playerAddress: String!) {
+    playerss(
+      where: { player_address: $playerAddress }
+      orderBy: "block_number"
+      orderDirection: "desc"
+    ) {
+      items {
+        game_id
+        player_address
+        joined_amount
+        joined_at
+        block_number
+        transaction_hash
+      }
+    }
+  }
+`;
+
+// All wins for a player
+export const GET_PLAYER_WINS = gql`
+  query GetPlayerWins($playerAddress: String!) {
+    winnerss(
+      where: { player_address: $playerAddress }
+      orderBy: "block_number"
+      orderDirection: "desc"
+    ) {
+      items {
+        game_id
+        player_address
+        prize_amount
+        platform_fee
+        creator_fee
+        paid_at
+        block_number
+        transaction_hash
+      }
+    }
+  }
+`;
+
+// Batch: multiple games by IDs
+export const GET_GAMES_BY_IDS = gql`
+  query GetGamesByIds($gameIds: [BigInt!]!) {
+    gamess(
+      where: { game_id_in: $gameIds }
+    ) {
+      items {
+        game_id
+        question_text
+        entry_fee
+        creator_address
+        state
+        current_round
+        total_players
+        prize_pool
+        commit_deadline
+        reveal_deadline
+        created_at
+        updated_at
+        block_number
+        transaction_hash
+      }
+    }
+  }
+`;
+
+// Batch: player votes across multiple games
+export const GET_PLAYER_VOTES_FOR_GAMES = gql`
+  query GetPlayerVotesForGames($playerAddress: String!, $gameIds: [BigInt!]!) {
+    votess(
+      where: { player_address: $playerAddress, game_id_in: $gameIds }
+      orderBy: "round"
+    ) {
+      items {
+        game_id
+        round
+        player_address
+        vote
+        revealed_at
+        block_number
+        transaction_hash
+      }
+    }
+  }
+`;
+
+// Batch: rounds for multiple games
+export const GET_ROUNDS_FOR_GAMES = gql`
+  query GetRoundsForGames($gameIds: [BigInt!]!) {
+    roundss(
+      where: { game_id_in: $gameIds }
+      orderBy: "round"
+    ) {
+      items {
+        game_id
+        round
+        yes_count
+        no_count
+        minority_vote
+        remaining_players
+        completed_at
+        block_number
+        transaction_hash
+      }
+    }
+  }
+`;
+
+// Batch: player wins for specific games
+export const GET_PLAYER_WINS_FOR_GAMES = gql`
+  query GetPlayerWinsForGames($playerAddress: String!, $gameIds: [BigInt!]!) {
+    winnerss(
+      where: { player_address: $playerAddress, game_id_in: $gameIds }
+    ) {
+      items {
+        game_id
+        player_address
+        prize_amount
+        platform_fee
+        creator_fee
+        paid_at
+        block_number
+        transaction_hash
+      }
+    }
+  }
+`;

@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 import {Script, console} from "forge-std/Script.sol";
 import {MinorityRuleGame} from "../src/MinorityRuleGame.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 /**
  * @title TestSetup
@@ -44,9 +45,16 @@ contract TestSetup is Script {
         if (gameAddress == address(0)) {
             console.log("No GAME_ADDRESS found, deploying new contract...");
             vm.startBroadcast(PK_0);
-            game = new MinorityRuleGame(ACCOUNT_0); // Account 0 as platform recipient
+            MinorityRuleGame impl = new MinorityRuleGame();
+            bytes memory initData = abi.encodeWithSelector(
+                MinorityRuleGame.initialize.selector,
+                ACCOUNT_0,
+                ACCOUNT_0
+            );
+            ERC1967Proxy proxy = new ERC1967Proxy(address(impl), initData);
+            game = MinorityRuleGame(address(proxy));
             vm.stopBroadcast();
-            console.log("MinorityRuleGame deployed to:", address(game));
+            console.log("MinorityRuleGame proxy deployed to:", address(game));
         } else {
             game = MinorityRuleGame(gameAddress);
             console.log("Using existing contract at:", address(game));
