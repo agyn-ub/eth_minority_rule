@@ -378,6 +378,33 @@ export const GET_ROUNDS_FOR_GAMES = gql`
   }
 `;
 
+// All player entries (for players leaderboard)
+export const GET_ALL_PLAYERS = gql`
+  query GetAllPlayers {
+    playerss(limit: 1000, orderBy: "block_number", orderDirection: "desc") {
+      items {
+        game_id
+        player_address
+        joined_at
+        block_number
+      }
+    }
+  }
+`;
+
+// All winner entries (for players leaderboard)
+export const GET_ALL_WINNERS = gql`
+  query GetAllWinners {
+    winnerss(limit: 1000) {
+      items {
+        game_id
+        player_address
+        prize_amount
+      }
+    }
+  }
+`;
+
 // Batch: player wins for specific games
 export const GET_PLAYER_WINS_FOR_GAMES = gql`
   query GetPlayerWinsForGames($playerAddress: String!, $gameIds: [BigInt!]!) {

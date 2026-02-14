@@ -9,6 +9,7 @@ interface PaginationProps {
   onPageChange: (page: number) => void
   totalItems?: number
   itemsPerPage?: number
+  itemLabel?: string
   className?: string
 }
 
@@ -18,6 +19,7 @@ export function Pagination({
   onPageChange,
   totalItems,
   itemsPerPage = 9,
+  itemLabel,
   className,
 }: PaginationProps) {
   const handlePrevious = () => {
@@ -74,7 +76,7 @@ export function Pagination({
 
       {totalItems && (
         <div className="text-xs text-muted-foreground">
-          Showing {startItem}-{endItem} of {totalItems} games
+          Showing {startItem}-{endItem} of {totalItems} {itemLabel || "items"}
         </div>
       )}
     </div>

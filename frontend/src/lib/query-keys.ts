@@ -43,6 +43,7 @@ export const queryKeys = {
   // Player-related keys
   players: {
     all: ['players'] as const,
+    list: ['players', 'list'] as const,
     search: (query: string) => ['players', 'search', query] as const,
     stats: (address: string) => ['players', 'stats', address.toLowerCase()] as const,
     votes: (address: string) => ['players', 'votes', address.toLowerCase()] as const,
