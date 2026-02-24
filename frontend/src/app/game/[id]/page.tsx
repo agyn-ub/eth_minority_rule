@@ -77,6 +77,9 @@ export default function GamePage() {
   }
 
   const hasJoined = address && players.some((p) => p.player_address === address.toLowerCase());
+  const isEliminated = address && eliminations.some(
+    (e) => e.player_address === address.toLowerCase() && e.eliminated
+  );
   const hasCommitted = address && commits.some(
     (c) => c.player_address === address.toLowerCase() && c.round === game.current_round
   );
@@ -287,7 +290,7 @@ export default function GamePage() {
         <JoinGameForm gameId={gameId} entryFee={game.entry_fee} />
       )}
 
-      {isLoadingCommits && game.state === 'CommitPhase' && hasJoined &&
+      {isLoadingCommits && game.state === 'CommitPhase' && hasJoined && !isEliminated &&
         game.commit_deadline && currentTime < Number(game.commit_deadline) && (
         <Card>
           <CardContent className="py-8">
@@ -298,12 +301,12 @@ export default function GamePage() {
         </Card>
       )}
 
-      {!isLoadingCommits && game.state === 'CommitPhase' && hasJoined && !hasCommitted &&
+      {!isLoadingCommits && game.state === 'CommitPhase' && hasJoined && !isEliminated && !hasCommitted &&
         game.commit_deadline && currentTime < Number(game.commit_deadline) && (
         <VoteCommitForm gameId={gameId} currentRound={game.current_round} />
       )}
 
-      {!isLoadingCommits && game.state === 'CommitPhase' && hasJoined && hasCommitted &&
+      {!isLoadingCommits && game.state === 'CommitPhase' && hasJoined && !isEliminated && hasCommitted &&
         game.commit_deadline && currentTime < Number(game.commit_deadline) && (
         <Card className="border-success/50 bg-success/10">
           <CardHeader>
@@ -344,7 +347,7 @@ export default function GamePage() {
       )}
 
       {/* Waiting for Reveal Phase - Show After Commit Deadline */}
-      {!isLoadingCommits && game.state === 'CommitPhase' && hasJoined && hasCommitted &&
+      {!isLoadingCommits && game.state === 'CommitPhase' && hasJoined && !isEliminated && hasCommitted &&
         game.commit_deadline && currentTime >= Number(game.commit_deadline) &&
         !game.reveal_deadline && (
         <Card className="border-accent/50 bg-accent/10">
@@ -363,7 +366,7 @@ export default function GamePage() {
       )}
 
       {/* Missed Commit Phase - User Joined but Didn't Vote */}
-      {!isLoadingCommits && game.state === 'RevealPhase' && hasJoined && !hasCommitted && (
+      {!isLoadingCommits && game.state === 'RevealPhase' && hasJoined && !isEliminated && !hasCommitted && (
         <Card className="border-destructive/50 bg-destructive/10">
           <CardHeader>
             <CardTitle className="text-destructive">❌ Missed Commit Phase</CardTitle>
@@ -385,7 +388,7 @@ export default function GamePage() {
         <ProcessRoundForm gameId={gameId} />
       )}
 
-      {isLoadingCommits && game.state === 'RevealPhase' && hasJoined &&
+      {isLoadingCommits && game.state === 'RevealPhase' && hasJoined && !isEliminated &&
         game.reveal_deadline && currentTime < Number(game.reveal_deadline) && (
         <Card>
           <CardContent className="py-8">
@@ -396,7 +399,7 @@ export default function GamePage() {
         </Card>
       )}
 
-      {!isLoadingCommits && game.state === 'RevealPhase' && hasJoined && hasCommitted && !hasRevealed &&
+      {!isLoadingCommits && game.state === 'RevealPhase' && hasJoined && !isEliminated && hasCommitted && !hasRevealed &&
         game.reveal_deadline && currentTime < Number(game.reveal_deadline) && (
         <VoteRevealForm gameId={gameId} currentRound={game.current_round} />
       )}
