@@ -3,8 +3,13 @@
 import { useAccount, useSwitchChain, useDisconnect } from 'wagmi';
 import { Button } from '@/components/ui/button';
 
-// Supported chains for this app
-const SUPPORTED_CHAINS = [31337, 84532, 8453];
+// Supported chains for this app (only include Anvil if configured)
+const includeAnvil = !!process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_ANVIL;
+const SUPPORTED_CHAINS = [
+  ...(includeAnvil ? [31337] : []),
+  84532,
+  8453,
+];
 
 // Well-known chain IDs (supported + common networks)
 // If a chainId isn't in this list, it's likely a stale/garbage value from an expired wallet session
@@ -63,12 +68,18 @@ export function NetworkWarningBanner() {
     <div className="bg-destructive/10 border-b border-destructive/30 p-4">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <p className="text-sm">
-          Wrong network (Chain {chainId}). Switch to: Anvil (31337), Base Sepolia (84532), or Base (8453)
+          Wrong network (Chain {chainId}). Switch to:{includeAnvil ? ' Anvil (31337),' : ''} Base Sepolia (84532), or Base (8453)
         </p>
         <div className="flex gap-2">
-          <Button onClick={() => switchChain({ chainId: 31337 })} size="sm">
-            Switch to Anvil
-          </Button>
+          {includeAnvil ? (
+            <Button onClick={() => switchChain({ chainId: 31337 })} size="sm">
+              Switch to Anvil
+            </Button>
+          ) : (
+            <Button onClick={() => switchChain({ chainId: 84532 })} size="sm">
+              Switch to Base Sepolia
+            </Button>
+          )}
           <Button onClick={() => disconnect()} size="sm" variant="outline">
             Disconnect
           </Button>
