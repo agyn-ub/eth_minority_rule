@@ -9,6 +9,7 @@ import { NetworkWarningBanner } from '@/components/NetworkWarningBanner';
 import { WebSocketStatus } from '@/components/websocket-status';
 import Link from 'next/link';
 import { SQUID_BRAND, SQUID_SHAPES } from '@/lib/squid-shapes';
+import { MobileNav } from '@/components/MobileNav';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -30,7 +31,7 @@ export default function RootLayout({
           <div className="min-h-screen flex flex-col">
             {/* Header - Squid Game Style */}
             <header className="border-b border-primary/30 bg-card sticky top-0 z-50">
-              <div className="container mx-auto px-4 py-5 flex items-center justify-between">
+              <div className="container mx-auto px-4 py-3 md:py-5 flex items-center justify-between">
                 <Link href="/" className="flex items-center gap-3 group">
                   <div className="flex items-center gap-1 text-lg">
                     <span className="text-primary">{SQUID_SHAPES.circle}</span>
@@ -46,7 +47,8 @@ export default function RootLayout({
                     </p>
                   </div>
                 </Link>
-                <nav className="flex items-center gap-8">
+                <MobileNav />
+                <nav className="hidden md:flex items-center gap-8">
                   <Link
                     href="/"
                     className="text-sm font-bold uppercase tracking-wider hover:text-primary transition-colors relative group"

@@ -183,7 +183,7 @@ export default function MyGamesPage() {
 
                 <CardContent className="space-y-4">
                   {/* Game Stats Grid */}
-                  <div className="grid grid-cols-3 gap-4 p-4 bg-muted/30 rounded-md">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-4 p-3 sm:p-4 bg-muted/30 rounded-md">
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Players</p>
                       <p className="text-base font-bold">{game.total_players}</p>
@@ -206,7 +206,7 @@ export default function MyGamesPage() {
                   {(game.commit_deadline || game.reveal_deadline) && (
                     <div className="p-4 bg-muted/20 rounded-md space-y-2">
                       {game.commit_deadline && (
-                        <div className="flex justify-between text-sm">
+                        <div className="flex flex-col sm:flex-row sm:justify-between text-sm gap-1">
                           <span className="text-muted-foreground">Commit deadline:</span>
                           <span className="font-semibold">
                             {new Date(Number(game.commit_deadline) * 1000).toLocaleString()}
@@ -214,7 +214,7 @@ export default function MyGamesPage() {
                         </div>
                       )}
                       {game.reveal_deadline && (
-                        <div className="flex justify-between text-sm">
+                        <div className="flex flex-col sm:flex-row sm:justify-between text-sm gap-1">
                           <span className="text-muted-foreground">Reveal deadline:</span>
                           <span className="font-semibold">
                             {new Date(Number(game.reveal_deadline) * 1000).toLocaleString()}

@@ -136,18 +136,18 @@ export default function HowItWorksPage() {
               Russian Roulette, or Musical Chairs with real crypto stakes!
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-surface-elevated rounded-lg border border-border/30">
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+            <div className="p-3 sm:p-4 bg-surface-elevated rounded-lg border border-border/30">
               <div className="text-xl mb-2 text-primary">{SQUID_SHAPES.circle}</div>
               <p className="text-sm font-bold mb-1">Psychology</p>
               <p className="text-xs text-muted-foreground">Predict opponent behavior</p>
             </div>
-            <div className="p-4 bg-surface-elevated rounded-lg border border-border/30">
+            <div className="p-3 sm:p-4 bg-surface-elevated rounded-lg border border-border/30">
               <div className="text-xl mb-2 text-accent">{SQUID_SHAPES.triangle}</div>
               <p className="text-sm font-bold mb-1">Strategy</p>
               <p className="text-xs text-muted-foreground">Adapt each round</p>
             </div>
-            <div className="p-4 bg-surface-elevated rounded-lg border border-border/30">
+            <div className="p-3 sm:p-4 bg-surface-elevated rounded-lg border border-border/30">
               <div className="text-xl mb-2 text-primary">{SQUID_SHAPES.square}</div>
               <p className="text-sm font-bold mb-1">High Stakes</p>
               <p className="text-xs text-muted-foreground">Real consequences</p>
@@ -602,28 +602,28 @@ export default function HowItWorksPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-surface-elevated rounded-lg border border-border/30 text-center">
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+            <div className="p-3 sm:p-4 bg-surface-elevated rounded-lg border border-border/30 text-center">
               <p className="text-sm font-bold mb-1 flex items-center justify-center gap-2">
-                <span className="text-accent">{SQUID_SHAPES.circle}</span> Share Ideas
+                <span className="text-accent">{SQUID_SHAPES.circle}</span> <span className="hidden sm:inline">Share Ideas</span><span className="sm:hidden">Ideas</span>
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground hidden sm:block">
                 Suggest new game mechanics
               </p>
             </div>
-            <div className="p-4 bg-surface-elevated rounded-lg border border-border/30 text-center">
+            <div className="p-3 sm:p-4 bg-surface-elevated rounded-lg border border-border/30 text-center">
               <p className="text-sm font-bold mb-1 flex items-center justify-center gap-2">
-                <span className="text-primary">{SQUID_SHAPES.triangle}</span> Get Updates
+                <span className="text-primary">{SQUID_SHAPES.triangle}</span> <span className="hidden sm:inline">Get Updates</span><span className="sm:hidden">Updates</span>
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground hidden sm:block">
                 New games and features
               </p>
             </div>
-            <div className="p-4 bg-surface-elevated rounded-lg border border-border/30 text-center">
+            <div className="p-3 sm:p-4 bg-surface-elevated rounded-lg border border-border/30 text-center">
               <p className="text-sm font-bold mb-1 flex items-center justify-center gap-2">
                 <span className="text-accent">{SQUID_SHAPES.square}</span> Connect
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground hidden sm:block">
                 Meet other players
               </p>
             </div>

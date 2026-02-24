@@ -52,7 +52,7 @@ export default function PlayersPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Page Header */}
-      <div className="relative overflow-hidden rounded-lg border border-primary/30 bg-gradient-to-br from-card via-card to-primary/5 p-8">
+      <div className="relative overflow-hidden rounded-lg border border-primary/30 bg-gradient-to-br from-card via-card to-primary/5 p-4 sm:p-8">
         <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-primary via-accent to-primary"></div>
         <div className="space-y-3">
           <div className="flex items-center gap-3">
@@ -85,7 +85,7 @@ export default function PlayersPage() {
       {/* Players Table */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <CardTitle>All Players</CardTitle>
               <CardDescription>
@@ -94,7 +94,7 @@ export default function PlayersPage() {
                   : `${filtered.length} player${filtered.length !== 1 ? 's' : ''} found`}
               </CardDescription>
             </div>
-            <div className="relative w-64">
+            <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 type="text"
@@ -129,9 +129,9 @@ export default function PlayersPage() {
                       <th className="text-left py-3 px-2 font-medium w-12">#</th>
                       <th className="text-left py-3 px-2 font-medium">Address</th>
                       <th className="text-right py-3 px-2 font-medium">Games</th>
-                      <th className="text-right py-3 px-2 font-medium">Wins</th>
-                      <th className="text-right py-3 px-2 font-medium">Win Rate</th>
-                      <th className="text-right py-3 px-2 font-medium">Total Prizes</th>
+                      <th className="text-right py-3 px-2 font-medium hidden sm:table-cell">Wins</th>
+                      <th className="text-right py-3 px-2 font-medium hidden sm:table-cell">Win Rate</th>
+                      <th className="text-right py-3 px-2 font-medium hidden md:table-cell">Total Prizes</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -152,11 +152,11 @@ export default function PlayersPage() {
                             <span className="sm:hidden">{formatAddress(player.address)}</span>
                           </td>
                           <td className="py-3 px-2 text-right">{player.totalGames}</td>
-                          <td className="py-3 px-2 text-right">{player.totalWins}</td>
-                          <td className="py-3 px-2 text-right">
+                          <td className="py-3 px-2 text-right hidden sm:table-cell">{player.totalWins}</td>
+                          <td className="py-3 px-2 text-right hidden sm:table-cell">
                             {(player.winRate * 100).toFixed(0)}%
                           </td>
-                          <td className="py-3 px-2 text-right font-mono">
+                          <td className="py-3 px-2 text-right font-mono hidden md:table-cell">
                             {formatWei(player.totalPrizes)} ETH
                           </td>
                         </tr>

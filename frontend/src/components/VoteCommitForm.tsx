@@ -249,25 +249,25 @@ Keep this file safe and come back to reveal your vote during the reveal phase.
         </div>
 
         {/* Large Vote Button Cards - Squid Game Style */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-3 sm:gap-6">
           {/* YES Button - Circle + Teal */}
           <button
             onClick={() => setSelectedVote(true)}
             className={`
-              relative p-10 rounded-lg border-2 transition-colors group
+              relative p-6 sm:p-10 rounded-lg border-2 transition-colors group
               ${selectedVote === true
                 ? 'border-accent bg-gradient-to-br from-accent/20 to-accent/5'
                 : 'border-border/50 bg-card hover:border-accent/50 hover:bg-accent/5'
               }
             `}
           >
-            <div className="text-center space-y-4">
+            <div className="text-center space-y-3 sm:space-y-4">
               {selectedVote === true && (
-                <div className="absolute top-4 right-4 text-accent text-xl font-bold">{SQUID_SHAPES.star}</div>
+                <div className="absolute top-3 right-3 sm:top-4 sm:right-4 text-accent text-xl font-bold">{SQUID_SHAPES.star}</div>
               )}
-              <div className="text-5xl text-accent">{SQUID_SHAPES.circle}</div>
-              <div className="text-xl font-bold text-foreground uppercase tracking-normal">YES</div>
-              <div className="h-1 w-16 bg-accent mx-auto"></div>
+              <div className="text-3xl sm:text-5xl text-accent">{SQUID_SHAPES.circle}</div>
+              <div className="text-lg sm:text-xl font-bold text-foreground uppercase tracking-normal">YES</div>
+              <div className="h-1 w-12 sm:w-16 bg-accent mx-auto"></div>
             </div>
           </button>
 
@@ -275,20 +275,20 @@ Keep this file safe and come back to reveal your vote during the reveal phase.
           <button
             onClick={() => setSelectedVote(false)}
             className={`
-              relative p-10 rounded-lg border-2 transition-colors group
+              relative p-6 sm:p-10 rounded-lg border-2 transition-colors group
               ${selectedVote === false
                 ? 'border-primary bg-gradient-to-br from-primary/20 to-primary/5'
                 : 'border-border/50 bg-card hover:border-primary/50 hover:bg-primary/5'
               }
             `}
           >
-            <div className="text-center space-y-4">
+            <div className="text-center space-y-3 sm:space-y-4">
               {selectedVote === false && (
-                <div className="absolute top-4 right-4 text-primary text-xl font-bold">{SQUID_SHAPES.star}</div>
+                <div className="absolute top-3 right-3 sm:top-4 sm:right-4 text-primary text-xl font-bold">{SQUID_SHAPES.star}</div>
               )}
-              <div className="text-5xl text-primary">{SQUID_SHAPES.triangle}</div>
-              <div className="text-xl font-bold text-foreground uppercase tracking-normal">NO</div>
-              <div className="h-1 w-16 bg-primary mx-auto"></div>
+              <div className="text-3xl sm:text-5xl text-primary">{SQUID_SHAPES.triangle}</div>
+              <div className="text-lg sm:text-xl font-bold text-foreground uppercase tracking-normal">NO</div>
+              <div className="h-1 w-12 sm:w-16 bg-primary mx-auto"></div>
             </div>
           </button>
         </div>

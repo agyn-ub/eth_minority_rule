@@ -64,7 +64,7 @@ export function PlayerSearchBar() {
 
       {/* Autocomplete Dropdown */}
       {isOpen && (
-        <Card className="absolute top-full mt-2 w-full z-50 max-h-96 overflow-auto">
+        <Card className="absolute top-full mt-2 w-full z-50 max-h-[50vh] sm:max-h-96 overflow-auto">
           <CardContent className="p-0">
             {isLoading ? (
               <div className="p-4 text-center text-muted-foreground">

@@ -131,7 +131,7 @@ export default function GamePage() {
 
       {/* State Header Bar - Dramatic */}
       <Card className="overflow-hidden border-primary/30 bg-card">
-        <div className={`${stateBgColor} px-6 py-5 flex items-center justify-between relative`}>
+        <div className={`${stateBgColor} px-4 py-4 sm:px-6 sm:py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative`}>
           <div className="absolute left-0 top-0 w-2 h-full bg-white/40"></div>
           <div className="absolute right-0 top-0 w-2 h-full bg-white/20"></div>
           <div className="flex items-center gap-4">
@@ -161,7 +161,7 @@ export default function GamePage() {
         </div>
 
         {/* Question Display */}
-        <div className="px-8 py-8 border-l-4 border-primary/50">
+        <div className="px-4 py-4 sm:px-8 sm:py-8 border-l-4 border-primary/50">
           <h1 className="text-xl font-bold text-foreground mb-4 leading-tight">
             {game.question_text || `Game #${game.game_id}`}
           </h1>
@@ -264,7 +264,7 @@ export default function GamePage() {
       {isCreator && game.state !== 'Completed' && (
         <Card className="border-primary bg-primary/5">
           <CardContent className="py-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <p className="font-semibold">You are the game creator</p>
                 <p className="text-sm text-muted-foreground">
@@ -272,7 +272,7 @@ export default function GamePage() {
                 </p>
               </div>
               <Link href={`/my-games/${gameId}/settings`}>
-                <Button variant="default">
+                <Button variant="default" className="w-full sm:w-auto">
                   <Settings className="w-4 h-4 mr-2" />
                   Game Settings
                 </Button>
@@ -420,12 +420,13 @@ export default function GamePage() {
           <CardContent>
             <div className="space-y-2">
               {currentRoundVotes.map((vote) => (
-                <div key={`${vote.game_id}-${vote.round}-${vote.player_address}`} className="flex items-center justify-between py-2 border-b">
+                <div key={`${vote.game_id}-${vote.round}-${vote.player_address}`} className="flex items-center justify-between py-2 border-b gap-2">
                   <Link
                     href={`/player/${vote.player_address}`}
-                    className="font-mono text-sm hover:text-primary transition-colors underline decoration-dotted"
+                    className="font-mono text-sm hover:text-primary transition-colors underline decoration-dotted truncate min-w-0"
                   >
-                    {vote.player_address}
+                    <span className="hidden sm:inline">{vote.player_address}</span>
+                    <span className="sm:hidden">{formatAddress(vote.player_address)}</span>
                   </Link>
                   <span
                     className={`px-2 py-1 text-xs rounded-full ${
@@ -483,12 +484,13 @@ export default function GamePage() {
           <CardContent>
             <div className="space-y-2">
               {winners.map((winner) => (
-                <div key={`${winner.game_id}-${winner.player_address}`} className="flex items-center justify-between py-2 border-b">
+                <div key={`${winner.game_id}-${winner.player_address}`} className="flex items-center justify-between py-2 border-b gap-2">
                   <Link
                     href={`/player/${winner.player_address}`}
-                    className="font-mono text-sm hover:text-primary transition-colors underline decoration-dotted"
+                    className="font-mono text-sm hover:text-primary transition-colors underline decoration-dotted truncate min-w-0"
                   >
-                    {winner.player_address}
+                    <span className="hidden sm:inline">{winner.player_address}</span>
+                    <span className="sm:hidden">{formatAddress(winner.player_address)}</span>
                   </Link>
                   <span className="text-sm font-semibold text-green-600">
                     {formatWei(winner.prize_amount)} ETH
