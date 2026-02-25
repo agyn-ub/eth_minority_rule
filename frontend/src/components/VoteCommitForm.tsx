@@ -31,8 +31,25 @@ export function VoteCommitForm({ gameId, currentRound }: VoteCommitFormProps) {
   const [selectedVote, setSelectedVote] = useState<boolean | null>(null);
   const [committedVoteData, setCommittedVoteData] = useState<VoteData | null>(null);
 
-  const { writeContract, data: hash, isPending } = useWriteContract();
+  const { writeContract, data: hash, isPending, isError, error, reset } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash, chainId: chainId as any });
+
+  // Handle transaction errors (e.g. MetaMask rejection)
+  useEffect(() => {
+    if (isError) {
+      const msg = error?.message || '';
+      if (msg.includes('User denied') || msg.includes('user rejected')) {
+        toast({ title: 'Transaction cancelled', description: 'You rejected the transaction in your wallet.' });
+      } else {
+        toast({
+          title: 'Error',
+          description: msg.length > 100 ? 'Failed to submit commit. Please try again.' : msg,
+          variant: 'destructive',
+        });
+      }
+      reset();
+    }
+  }, [isError, error, reset, toast]);
 
   // Load committed vote data when transaction confirms
   // Let polling naturally update the UI (no cache invalidation needed)

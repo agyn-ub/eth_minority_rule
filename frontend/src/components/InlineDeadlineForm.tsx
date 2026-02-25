@@ -37,9 +37,9 @@ export function InlineDeadlineForm({ game, currentTime }: InlineDeadlineFormProp
     game.commit_deadline &&
     now > Number(game.commit_deadline) * 1000;
 
-  // Show success toast and capture state when transaction confirms
+  // Show success toast and capture state when transaction confirms (only once)
   useEffect(() => {
-    if (isSuccess) {
+    if (isSuccess && !submittedInState.current) {
       submittedInState.current = game.state;
       toast({
         title: 'Transaction confirmed',
