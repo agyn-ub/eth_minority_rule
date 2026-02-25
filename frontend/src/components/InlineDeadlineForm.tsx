@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useWriteContract, useWaitForTransactionReceipt, useAccount } from 'wagmi';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ export function InlineDeadlineForm({ game, currentTime }: InlineDeadlineFormProp
 
   const [commitDuration, setCommitDuration] = useState('300');
   const [revealDuration, setRevealDuration] = useState('180');
+  const submittedInState = useRef<string | null>(null);
 
   const { writeContract, data: hash, isPending, isError, error, reset } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash, chainId: chainId as any });
@@ -36,25 +37,23 @@ export function InlineDeadlineForm({ game, currentTime }: InlineDeadlineFormProp
     game.commit_deadline &&
     now > Number(game.commit_deadline) * 1000;
 
-  // Show success toast when transaction confirms
+  // Show success toast and capture state when transaction confirms
   useEffect(() => {
     if (isSuccess) {
+      submittedInState.current = game.state;
       toast({
         title: 'Transaction confirmed',
         description: 'Waiting for indexer to process the event...',
       });
     }
-  }, [isSuccess, toast]);
+  }, [isSuccess, toast, game.state]);
 
-  // Reset transaction state when game state changes
-  // This allows form to reappear for setting reveal deadline
+  // Reset transaction state only after game state actually changes (via WebSocket/polling)
+  // This prevents the form from flickering back before the new state arrives
   useEffect(() => {
-    if (isSuccess && game.state !== 'ZeroPhase') {
-      // Give a moment for WebSocket to show success toast
-      const timer = setTimeout(() => {
-        reset();
-      }, 2000);
-      return () => clearTimeout(timer);
+    if (isSuccess && submittedInState.current && game.state !== submittedInState.current) {
+      submittedInState.current = null;
+      reset();
     }
   }, [game.state, isSuccess, reset]);
 
