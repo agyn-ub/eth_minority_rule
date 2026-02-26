@@ -13,6 +13,7 @@ export default createConfig({
         baseSepolia: {
           chainId: 84532,
           transport: http(process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org"),
+          pollingInterval: 4_000,
         },
       }
     : {
